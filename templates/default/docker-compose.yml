@@ -1,0 +1,29 @@
+networks:
+  default:
+  traefik:
+    external: true
+
+services:
+  example:
+    image: whoami
+    restart: unless-stopped
+    # ports:
+    #   - 80:80 # Port of service
+    volumes:
+    # use generated folder for generated templates
+    # - ./generated/example:/example:ro # generated template "named example"
+    # use volumes folder for data persistence
+    - ./volumes/test:/test # volume "test" for service
+    env_file:
+    - .env # load selected environment file
+
+    networks:
+    - traefik # add to traefik network
+    - default # add to default (stack internal) network
+
+    # add labels to connect to traefik
+    labels:
+      - "traefik.enable=true"
+      #! replace EXAMPLE with your service name
+      - "traefik.http.routers.EXAMPLE.rule=Host(`${EXAMPLE_DOMAIN}`)"
+      - "traefik.http.routers.EXAMPLE.entrypoints=websecure"
