@@ -146,6 +146,7 @@ borg_restore-fresh() {
     exit 1
   fi
   # restore the .git folder
+  rm -rf .git
   mv $BASE_DIR/tmp/$SERVICE_DIR_NAME/.git ./
   echo "[BORG] Restore finished"
 }
@@ -161,9 +162,12 @@ borg_restore-diff() {
 
   set +e # disable exit on error
 
+  mv .git $BASE_DIR/tmp/$SERVICE_DIR_NAME/
   echo "[BORG] Restoring the differences from backup..."
   sudo rsync -avh --progress --delete "$BASE_DIR/tmp/$SERVICE_DIR_NAME/mnt" "$SERVICE_DIR"
   restoreExitCode=$?
+  rm -rf .git
+  mv $BASE_DIR/tmp/$SERVICE_DIR_NAME/.git ./
 
   echo "[BORG] Unmounting the backup..."
   sudo -E borg umount "$BASE_DIR/tmp/$SERVICE_DIR_NAME/mnt"
