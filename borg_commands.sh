@@ -128,15 +128,54 @@ borg_backup() {
   echo "[BORG] Backup finished"
 }
 
+
+borg_check_git_before_restore() {
+  # check if .git folder exists
+  if [ ! -d "$SERVICE_DIR/.git" ]; then
+    echo "[BORG] No .git folder found in $SERVICE_DIR_NAME."
+    echo "       Restoring .git from backup as well."
+    export HAS_GIT=false
+    return
+  fi
+  export HAS_GIT=true
+
+  # check if uncommitted changes exist in service
+  if [[ -n $(git status --porcelain) ]]; then
+    echo "[BORG] Uncommitted changes exist in $SERVICE_DIR_NAME!"
+    printf "[BORG] Do you want to continue with the restore?(y/N): "
+    read -n 1 -r
+    echo
+    case "$REPLY" in
+    [yY][eE][sS] | [yY])
+      ;;
+    *)
+      echo "       exiting"
+      exit 1
+      ;;
+    esac
+  fi
+
+  echo "[BORG] Securing .git folder before restore..."
+  mkdir -p $BASE_DIR/tmp/$SERVICE_DIR_NAME
+  mv .git $BASE_DIR/tmp/$SERVICE_DIR_NAME/
+}
+borg_check_git_after_restore() {
+  if [ "$HAS_GIT" == false ]; then
+    return
+  fi
+  echo "[BORG] Restoring .git folder after restore..."
+  rm -rf .git
+  mv $BASE_DIR/tmp/$SERVICE_DIR_NAME/.git ./
+}
+
 borg_restore-fresh() {
   borg_check_name "$1" "latest"
 
   echo "[BORG] Purging current data..."
   # make sure we are in the service directory
   cd $SERVICE_DIR
-  # do not delete the .git folder
-  mkdir -p $BASE_DIR/tmp/$SERVICE_DIR_NAME
-  mv .git $BASE_DIR/tmp/$SERVICE_DIR_NAME/
+  borg_check_git_before_restore
+  # delete all files and folders
   rm -rf ./*
   echo "[BORG] Restore data from backup..."
   BORG_RSH="$(echo $BORG_RSH | sed "s/~/\/home\/$USER/g")"
@@ -146,8 +185,7 @@ borg_restore-fresh() {
     exit 1
   fi
   # restore the .git folder
-  rm -rf .git
-  mv $BASE_DIR/tmp/$SERVICE_DIR_NAME/.git ./
+  borg_check_git_after_restore
   echo "[BORG] Restore finished"
 }
 
