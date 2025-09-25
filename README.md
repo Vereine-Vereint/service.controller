@@ -8,6 +8,26 @@ This repository controls all services in different directories.
 | service.controller/
 | | - controller.sh # add or remove any services
 | | - core.sh # core functionality for other services
+| | - init.sh # script to initialize a server
 |
 | service/
 | | - service.sh # uses core from service.controller.
+
+## Initialize
+
+You can use this script to initialize the folder structure on the server.
+
+```bash
+curl https://github.com/Vereine-Vereint/service.controller/blob/main/init.sh | bash
+```
+
+- services folder name  
+  this is the folder where all services will be stored. Default is `services`.
+- controller folder name  
+  this is the folder (inside the services folder), where the controller scripts will be stored. Default is `controller`.
+
+## Usage
+
+```bash
+./controller.sh help
+```

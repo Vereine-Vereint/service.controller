@@ -40,31 +40,6 @@ main() {
 }
 
 # COMMANDS
-commands+=([init]=":Initialize the services directory")
-cmd_init() {
-  echo "Initializing services..."
-
-  # create .env file in subdirectory. Write "CORE_DIR=<path to core>"
-  if [[ ! -f "$BASE_DIR/.env" ]]; then
-    # extract dirname of CORE_DIR
-    CORE_DIR_NAME=$(basename "$CORE_DIR")
-    echo "CORE_DIR_NAME=$CORE_DIR_NAME" >"$BASE_DIR/.env"
-    echo "BORG_RSH=\"ssh -i \$HOME/.ssh/id_rsa\"" >>"$BASE_DIR/.env"
-    echo "BORG_REPO_BASE=">>"$BASE_DIR/.env"
-    echo "BORG_PASSPHRASE=">>"$BASE_DIR/.env"
-
-    echo ".env file created in services directory"
-  fi
-
-  # create controller.sh in base directory, which just calls this script
-  echo "#!/bin/bash" >"$BASE_DIR/controller.sh"
-  echo "cd -- \"\$(dirname -- \"\${BASH_SOURCE[0]}\")\"" >>"$BASE_DIR/controller.sh"
-  echo "source .env" >>"$BASE_DIR/controller.sh"
-  echo "source \$CORE_DIR_NAME/controller.sh \"\$@\"" >>"$BASE_DIR/controller.sh"
-  chmod +x "$BASE_DIR/controller.sh"
-  echo "controller.sh created in services directory"
-}
-
 commands+=([create]="<name> <template>:Create a new service using a template")
 cmd_create() {
   echo "Creating new service..."
