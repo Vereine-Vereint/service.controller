@@ -172,9 +172,10 @@ borg_restore-fresh() {
   borg_check_name "$1" "latest"
 
   echo "[BORG] Purging current data..."
-  # make sure we are in the service directory
+
   cd $SERVICE_DIR
   borg_check_git_before_restore
+
   # delete all files and folders
   rm -rf ./*
   echo "[BORG] Restore data from backup..."
@@ -184,8 +185,9 @@ borg_restore-fresh() {
     echo "[BORG] Restore failed"
     exit 1
   fi
-  # restore the .git folder
+
   borg_check_git_after_restore
+
   echo "[BORG] Restore finished"
 }
 
@@ -198,20 +200,22 @@ borg_restore-diff() {
   mkdir -p "$BASE_DIR/tmp/$SERVICE_DIR_NAME/mnt"
   sudo -E borg mount --progress "::$name" "$BASE_DIR/tmp/$SERVICE_DIR_NAME/mnt"
 
+  cd $SERVICE_DIR
+  borg_check_git_before_restore
+
   set +e # disable exit on error
 
-  mv .git $BASE_DIR/tmp/$SERVICE_DIR_NAME/
   echo "[BORG] Restoring the differences from backup..."
   sudo rsync -avh --progress --delete "$BASE_DIR/tmp/$SERVICE_DIR_NAME/mnt" "$SERVICE_DIR"
   restoreExitCode=$?
-  rm -rf .git
-  mv $BASE_DIR/tmp/$SERVICE_DIR_NAME/.git ./
 
   echo "[BORG] Unmounting the backup..."
   sudo -E borg umount "$BASE_DIR/tmp/$SERVICE_DIR_NAME/mnt"
   unmountExitCode=$?
 
   set -e # enable exit on error
+
+  borg_check_git_after_restore
 
   if [ $restoreExitCode -ne 0 ] || [ $unmountExitCode -ne 0 ]; then
     echo "[BORG] Restore failed:"
