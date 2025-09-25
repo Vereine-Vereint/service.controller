@@ -119,7 +119,7 @@ borg_backup() {
   borg_check_name "$1" "generate"
 
   echo "[BORG] Backup current data..."
-  sudo -E borg create --stats --progress --compression zlib "::$name" ./volumes
+  sudo -E borg create --stats --progress --compression zlib "::$name" .
   if [ $? -ne 0 ]; then
     echo "[BORG] Backup failed"
     exit 1
@@ -130,8 +130,13 @@ borg_backup() {
 borg_restore-fresh() {
   borg_check_name "$1" "latest"
 
-  echo "[BORG] Purging currrent data..."
-  docker_delete-volumes
+  echo "[BORG] Purging current data..."
+  # make sure we are in the service directory
+  cd $SERVICE_DIR
+  # do not delete the .git folder
+  mkdir -p $BASE_DIR/tmp/$SERVICE_DIR_NAME
+  mv .git $BASE_DIR/tmp/$SERVICE_DIR_NAME/
+  rm -rf ./*
   echo "[BORG] Restore data from backup..."
   BORG_RSH="$(echo $BORG_RSH | sed "s/~/\/home\/$USER/g")"
   sudo -E borg extract --progress "::$name"
@@ -139,6 +144,8 @@ borg_restore-fresh() {
     echo "[BORG] Restore failed"
     exit 1
   fi
+  # restore the .git folder
+  mv $BASE_DIR/tmp/$SERVICE_DIR_NAME/.git ./
   echo "[BORG] Restore finished"
 }
 
@@ -148,25 +155,25 @@ borg_restore-diff() {
   BORG_RSH="$(echo $BORG_RSH | sed "s/~/\/home\/$USER/g")"
 
   echo "[BORG] Mounting the backup..."
-  mkdir -p "$CORE_DIR/mnt"
-  sudo -E borg mount --progress "::$name" "$CORE_DIR/mnt"
+  mkdir -p "$BASE_DIR/tmp/$SERVICE_DIR_NAME/mnt"
+  sudo -E borg mount --progress "::$name" "$BASE_DIR/tmp/$SERVICE_DIR_NAME/mnt"
 
   set +e # disable exit on error
 
   echo "[BORG] Restoring the differences from backup..."
-  sudo rsync -avh --progress --delete "$CORE_DIR/mnt/volumes" "$SERVICE_DIR"
+  sudo rsync -avh --progress --delete "$BASE_DIR/tmp/$SERVICE_DIR_NAME/mnt" "$SERVICE_DIR"
   restoreExitCode=$?
 
   echo "[BORG] Unmounting the backup..."
-  sudo -E borg umount "$CORE_DIR/mnt"
-  unmoutExitCode=$?
+  sudo -E borg umount "$BASE_DIR/tmp/$SERVICE_DIR_NAME/mnt"
+  unmountExitCode=$?
 
   set -e # enable exit on error
 
-  if [ $restoreExitCode -ne 0 ] || [ $unmoutExitCode -ne 0 ]; then
+  if [ $restoreExitCode -ne 0 ] || [ $unmountExitCode -ne 0 ]; then
     echo "[BORG] Restore failed:"
     echo "       rsync: $restoreExitCode"
-    echo "       umount: $unmoutExitCode"
+    echo "       umount: $unmountExitCode"
     exit 1
   fi
   echo "[BORG] Restore finished"
@@ -269,7 +276,7 @@ borg_autobackup-enable() {
   else
     echo "[BORG] Enabling automatic backups for this service..."
   fi
-  (crontab -l; echo "$time $SERVICE_DIR/service.sh borg autobackup-now $CORE_DIR/autobackup.log") | crontab -
+  (crontab -l; echo "$time $SERVICE_DIR/service.sh borg autobackup-now $SERVICE_DIR/autobackup.log") | crontab -
   echo "[CRON] Added the following cronjob:"  
   echo "$(crontab -l | grep "$SERVICE_NAME/service.sh borg")"
 }
