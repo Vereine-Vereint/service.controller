@@ -99,6 +99,7 @@ borg_init() {
 }
 
 borg_info() {
+  echo "[BORG] using BORG_REPO $BORG_REPO"
   echo "[BORG] Service information:"
   if crontab -l | grep -q "$SERVICE_NAME/service.sh borg"; then
     echo "[BORG] Automatic backups are enabled."
@@ -253,6 +254,7 @@ borg_pwgen() {
   echo "BORG_PASSPHRASE=$(openssl rand -base64 48)" >> "../$ENV_FILE"
 }
 
+# TODO autobackup rewrite, so the .env variable "BORG_AUTOBACKUP_SERVICES is used instead of individual cronjobs"
 borg_autobackup-enable() {
   time="0 3 * * *"
   if [ ! -z "$1" ]; then
