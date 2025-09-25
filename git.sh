@@ -2,6 +2,7 @@
 # GIT COMMANDS
 declare -A git_commands=(
   [commit]="<message>:Add and commit all changes with <message>"
+  [configure]=":Configure git user.name and user.email"
 )
 
 # DOCKER GLOBAL SUB-COMMANDS
@@ -48,4 +49,19 @@ git_commit() {
   git add .
   git commit -m "$message"
   echo "Committed changes with message: $message"
+}
+
+git_configure() {
+  read -p "Enter git user.name: " git_user_name
+  read -p "Enter git user.email: " git_user_email
+
+  if [[ -z "$git_user_name" || -z "$git_user_email" ]]; then
+    echo "Both user.name and user.email are required"
+    exit 1
+  fi
+
+  git config --global user.name "$git_user_name"
+  git config --global user.email "$git_user_email"
+
+  echo "Configured git with user.name='$git_user_name' and user.email='$git_user_email'"
 }
