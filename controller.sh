@@ -105,6 +105,14 @@ cmd_remove() {
   echo "Service '$service_name' removed"
 }
 
+commands+=([update]=":Update the controller to the latest version")
+cmd_update() {
+  echo "Updating controller..."
+  cd $CORE_DIR
+  git pull origin main
+  echo "Controller updated to latest version"
+}
+
 # TODO import command
 
 main "$@"
