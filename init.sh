@@ -11,8 +11,8 @@ cd $BASE_DIR
 
 
 # clone this repository
-read -p "Enter the controller directory name (controller): " CORE_DIR_NAME
-CORE_DIR_NAME=${CORE_DIR_NAME:-controller}
+read -p "Enter the controller directory name (.controller): " CORE_DIR_NAME
+CORE_DIR_NAME=${CORE_DIR_NAME:-.controller}
 if [[ -d "$CORE_DIR_NAME" ]]; then
   echo "Directory '$CORE_DIR_NAME' already exists. Updating existing repository..."
   cd "$CORE_DIR_NAME"

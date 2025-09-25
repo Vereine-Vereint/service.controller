@@ -6,7 +6,7 @@ BASE_DIR=$(dirname "$CORE_DIR")
 set -e
 
 source ./version.sh
-echo "[CONTROLLER] $CORE_VERSION ($(git rev-parse --short HEAD))"
+echo "[CORE] $CORE_VERSION ($(git rev-parse --short HEAD))"
 
 # COMMANDS
 declare -A commands=(
@@ -67,6 +67,7 @@ cmd_create() {
   fi
 
   cp -r "$template_dir" "$BASE_DIR/$service_name"
+  chmod +x "$BASE_DIR/$service_name/service.sh"
   echo "Copied template '$template' to '$service_name'"
 
   cd "$BASE_DIR/$service_name"
