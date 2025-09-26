@@ -128,7 +128,7 @@ borg_backup() {
   echo "[BORG] Backup finished"
 }
 
-
+# TODO fix: on restore-diff permissions error
 borg_check_git_before_restore() {
   # check if .git folder exists
   if [ ! -d "$SERVICE_DIR/.git" ]; then
@@ -177,7 +177,7 @@ borg_restore-fresh() {
   borg_check_git_before_restore
 
   # delete all files and folders
-  rm -rf ./*
+  sudo rm -rf ./*
   echo "[BORG] Restore data from backup..."
   BORG_RSH="$(echo $BORG_RSH | sed "s/~/\/home\/$USER/g")"
   sudo -E borg extract --progress "::$name"
