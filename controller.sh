@@ -77,7 +77,7 @@ cmd_create() {
   echo "Initialized git repository"
 
   echo "[CORE] Service '$service_name' created from template '$template'"
-  # TODO backup service initially
+  # TODO create borg repo
 }
 
 commands+=([remove]="<name>:Remove an existing service")

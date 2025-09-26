@@ -44,3 +44,6 @@ echo "source \$CORE_DIR_NAME/controller.sh \"\$@\"" >>"$BASE_DIR/controller.sh"
 chmod +x "$BASE_DIR/controller.sh"
 
 echo "Initialization complete."
+
+# TODO make sure borgbackup and crontab are installed
+# ? maybe even docker/docker compose as well?
