@@ -45,5 +45,5 @@ chmod +x "$BASE_DIR/controller.sh"
 
 echo "Initialization complete."
 
-# TODO make sure borgbackup and crontab are installed
+# TODO make sure borgbackup, crontab, rsync are installed
 # ? maybe even docker/docker compose as well?

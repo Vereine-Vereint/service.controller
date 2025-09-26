@@ -206,7 +206,7 @@ borg_restore-diff() {
   set +e # disable exit on error
 
   echo "[BORG] Restoring the differences from backup..."
-  sudo rsync -avh --progress --delete "$BASE_DIR/tmp/$SERVICE_DIR_NAME/mnt" "$SERVICE_DIR"
+  sudo rsync -ah --progress --delete "$BASE_DIR/tmp/$SERVICE_DIR_NAME/mnt" "$SERVICE_DIR"
   restoreExitCode=$?
 
   echo "[BORG] Unmounting the backup..."
