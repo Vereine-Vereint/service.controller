@@ -128,7 +128,6 @@ borg_backup() {
   echo "[BORG] Backup finished"
 }
 
-# TODO fix: on restore-diff permissions error
 borg_check_git_before_restore() {
   rm -rf $BASE_DIR/tmp/$SERVICE_DIR_NAME/.git #TODO check first, ask user if it should be deleted
   # check if .git folder exists
@@ -166,7 +165,7 @@ borg_check_git_after_restore() {
     return
   fi
   echo "[BORG] Restoring .git folder after restore..."
-  rm -rf .git
+  sudo rm -rf .git
   mv $BASE_DIR/tmp/$SERVICE_DIR_NAME/.git ./
 }
 
@@ -198,18 +197,18 @@ borg_restore-diff() {
 
   BORG_RSH="$(echo $BORG_RSH | sed "s/~/\/home\/$USER/g")"
 
+  cd $SERVICE_DIR
+  borg_check_git_before_restore
+
   echo "[BORG] Mounting the backup..."
   mkdir -p "$BASE_DIR/tmp/$SERVICE_DIR_NAME/mnt"
   sudo -E borg mount --progress "::$name" "$BASE_DIR/tmp/$SERVICE_DIR_NAME/mnt"
-
-  cd $SERVICE_DIR
-  borg_check_git_before_restore
 
   set +e # disable exit on error
 
   echo "[BORG] Restoring the differences from backup..."
   # Use --info=progress2 to show only the overall progress percentage
-  sudo rsync -ah --info=progress2 --delete "$BASE_DIR/tmp/$SERVICE_DIR_NAME/mnt/" "$SERVICE_DIR"
+  sudo rsync -ah --chown=$USER:$USER --info=progress2 --delete "$BASE_DIR/tmp/$SERVICE_DIR_NAME/mnt/" "$SERVICE_DIR"
   restoreExitCode=$?
 
   echo "[BORG] Unmounting the backup..."
