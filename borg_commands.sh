@@ -130,6 +130,7 @@ borg_backup() {
 
 # TODO fix: on restore-diff permissions error
 borg_check_git_before_restore() {
+  rm -rf $BASE_DIR/tmp/$SERVICE_DIR_NAME/.git #TODO check first, ask user if it should be deleted
   # check if .git folder exists
   if [ ! -d "$SERVICE_DIR/.git" ]; then
     echo "[BORG] No .git folder found in $SERVICE_DIR_NAME."
@@ -159,6 +160,7 @@ borg_check_git_before_restore() {
   mkdir -p $BASE_DIR/tmp/$SERVICE_DIR_NAME
   mv .git $BASE_DIR/tmp/$SERVICE_DIR_NAME/
 }
+
 borg_check_git_after_restore() {
   if [ "$HAS_GIT" == false ]; then
     return
