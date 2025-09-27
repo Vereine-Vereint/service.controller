@@ -52,3 +52,15 @@ borg_controller_change-passphrase() {
   export BORG_PASSPHRASE="$BORG_NEW_PASSPHRASE"
   echo "[BORG] Passphrase changed successfully for repository '$name'"
 }
+
+borg_controller_commands+=([autobackup-now]=":Create a new backup for all enabled services immediately")
+borg_controller_autobackup-now() {
+  echo "[BORG] Creating a new backup for all enabled services..."
+  # Split BORG_AUTOBACKUP_SERVICES into an array
+  IFS=',' read -r -a services <<< "$BORG_AUTOBACKUP_SERVICES"
+  for service in "${services[@]}"; do
+    echo "[BORG] Backing up service: $service"
+    # Implement the backup logic for each service here
+    $BASE_DIR/$service/service.sh borg autobackup-now
+  done
+}

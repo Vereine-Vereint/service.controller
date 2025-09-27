@@ -1,7 +1,6 @@
 
 declare -A borg_commands=(
   [init]=":Create remote repository"
-  [pwgen]=":Generate a random passphrase"
   [info]=":Show repository information"
   [list]=":Lists all backups"
 
@@ -15,10 +14,8 @@ declare -A borg_commands=(
   [prune]=":Prune old backups"
 
   ["break-lock"]=":Break the repository lock !USE WITH CAUTION!"
-  
+
   ["autobackup-now"]="<logfile>:Automatically backup and prune now"
-  ["autobackup-enable"]="<time>:Enable automatic backups (default time: '0 3 * * *')"
-  ["autobackup-disable"]=":Disable automatic backups"
 )
 
 add_global_subcommand "borg" "restore"

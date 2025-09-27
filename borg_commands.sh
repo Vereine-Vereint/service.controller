@@ -297,50 +297,6 @@ borg_break-lock() {
   echo "[BORG] Repository lock freed"
 }
 
-borg_pwgen() {
-  echo "[BORG] Generating a new passphrase..."
-  echo "BORG_PASSPHRASE=$(openssl rand -base64 48)" >> "../$ENV_FILE"
-}
-
-# TODO autobackup rewrite, so the .env variable "BORG_AUTOBACKUP_SERVICES is used instead of individual cronjobs"
-borg_autobackup-enable() {
-  time="0 3 * * *"
-  if [ ! -z "$1" ]; then
-    time="$1" # "hour.minute" or correct cron format
-    if [[ "$time" =~ ^[0-9]+\.[0-9]+$ ]]; then
-      minute=$(echo $time | cut -d'.' -f2)
-      hour=$(echo $time | cut -d'.' -f1)
-      if [ $minute -gt 59 ] || [ $hour -gt 23 ]; then
-        echo "[BORG] Invalid time format, please use 'hour.minute'"
-        exit 1
-      fi
-      time="$minute $hour * * *"
-    else
-      time="$1"
-    fi
-  fi
-
-  if crontab -l | grep -q "$SERVICE_NAME/service.sh borg"; then
-    echo "[BORG] Updating automatic backups for this service..."
-    borg_autobackup-disable true
-  else
-    echo "[BORG] Enabling automatic backups for this service..."
-  fi
-  (crontab -l; echo "$time $SERVICE_DIR/service.sh borg autobackup-now $SERVICE_DIR/autobackup.log") | crontab -
-  echo "[CRON] Added the following cronjob:"  
-  echo "$(crontab -l | grep "$SERVICE_NAME/service.sh borg")"
-}
-
-borg_autobackup-disable() {
-  if [ -z "$1" ] || [ "$1" == false ]; then
-    echo "[BORG] Disabling automatic backups for this service..."
-  fi
-  cronjob=$(crontab -l | grep "$SERVICE_NAME/service.sh borg")
-  crontab -l | grep -v "$SERVICE_NAME/service.sh borg" | crontab -
-  echo "[CRON] Removed the following cronjob:"
-  echo "$cronjob"
-}
-
 borg_autobackup-now() {
   if [ ! -z "$1" ]; then
     $SERVICE_DIR/service.sh borg autobackup-now > $1 2>&1
