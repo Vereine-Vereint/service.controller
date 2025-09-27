@@ -63,6 +63,6 @@ borg_controller_autobackup-now() {
     echo "[CONTROLLER] ######################################## Backing up service: $service"
     # Implement the backup logic for each service here
     $BASE_DIR/$service/service.sh borg autobackup-now
-    echo "[CONTROLLER] ######################################## Finished backing up service: $service"
+    echo "[CONTROLLER] ######################################## Finished service  : $service"
   done
 }
