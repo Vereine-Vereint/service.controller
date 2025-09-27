@@ -55,7 +55,10 @@ if crontab -l | grep -q "$BASE_DIR/controller.sh borg autobackup-now"; then
 else
   read -p "Do you want to set up automatic backups? (y/n): " setup_cron
   if [[ "$setup_cron" =~ ^[Yy]$ ]]; then
-    read -p "Enter the cron schedule (e.g., '0 3 * * *' for daily at 3 AM): " cron_schedule
+    read -p "Enter the cron schedule (default '0 3 * * *' for daily at 3 AM): " cron_schedule
+    if [ -z "$cron_schedule" ]; then
+      cron_schedule="0 3 * * *"
+    fi
     (crontab -l 2>/dev/null; echo "$cron_schedule $BASE_DIR/controller.sh borg autobackup-now >> $BASE_DIR/backup.log 2>&1") | crontab -
     echo "Cronjob added for automatic backups."
   fi

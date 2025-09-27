@@ -6,7 +6,7 @@ BASE_DIR=$(dirname "$CORE_DIR")
 set -e
 
 source ./version.sh
-echo "[CORE] $CORE_VERSION ($(git rev-parse --short HEAD))"
+echo "[CONTROLLER] $CORE_VERSION ($(git rev-parse --short HEAD))"
 
 set -o allexport
 source ../.env
@@ -81,7 +81,7 @@ cmd_create() {
   git commit -m "Initial commit from template '$template'" >/dev/null
   echo "Initialized git repository"
 
-  echo "[CORE] Service '$service_name' created from template '$template'"
+  echo "[CONTROLLER] Service '$service_name' created from template '$template'"
   # TODO create borg repo
 }
 

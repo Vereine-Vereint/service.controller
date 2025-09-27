@@ -35,32 +35,34 @@ borg_controller_change-passphrase() {
   local old_passphrase="$2"
 
   if [ -z "$name" ]; then
-    echo "[BORG] Repository name is required"
+    echo "[CONTROLLER] Repository name is required"
     exit 1
   fi
   if [ -z "$old_passphrase" ]; then
-    echo "[BORG] Old passphrase is required"
+    echo "[CONTROLLER] Old passphrase is required"
     exit 1
   fi
 
-  echo "[BORG] Changing passphrase for repository '$name'..."
+  echo "[CONTROLLER] Changing passphrase for repository '$name'..."
   export BORG_REPO="$BORG_REPO_BASE/$name"
 
   export BORG_NEW_PASSPHRASE="$BORG_PASSPHRASE" 
   export BORG_PASSPHRASE="$old_passphrase"
   sudo -E borg key change-passphrase
   export BORG_PASSPHRASE="$BORG_NEW_PASSPHRASE"
-  echo "[BORG] Passphrase changed successfully for repository '$name'"
+  echo "[CONTROLLER] Passphrase changed successfully for repository '$name'"
 }
 
 borg_controller_commands+=([autobackup-now]=":Create a new backup for all enabled services immediately")
 borg_controller_autobackup-now() {
-  echo "[BORG] Creating a new backup for all enabled services..."
+  echo "[CONTROLLER] Creating a new backup for all enabled services..."
   # Split BORG_AUTOBACKUP_SERVICES into an array
   IFS=',' read -r -a services <<< "$BORG_AUTOBACKUP_SERVICES"
   for service in "${services[@]}"; do
-    echo "[BORG] Backing up service: $service"
+    echo
+    echo "[CONTROLLER] ######################################## Backing up service: $service"
     # Implement the backup logic for each service here
     $BASE_DIR/$service/service.sh borg autobackup-now
+    echo "[CONTROLLER] ######################################## Finished backing up service: $service"
   done
 }
