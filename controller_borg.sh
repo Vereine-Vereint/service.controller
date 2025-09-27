@@ -46,10 +46,9 @@ borg_controller_change-passphrase() {
   echo "[BORG] Changing passphrase for repository '$name'..."
   export BORG_REPO="$BORG_REPO_BASE/$name"
 
-  BORG_NEW_PASSPHRASE="$BORG_PASSPHRASE" BORG_PASSPHRASE="$old_passphrase" borg key change-passphrase
-  if [ $? -ne 0 ]; then
-    echo "[BORG] Change passphrase failed"
-    exit 1
-  fi
+  export BORG_NEW_PASSPHRASE="$BORG_PASSPHRASE" 
+  export BORG_PASSPHRASE="$old_passphrase"
+  sudo -E borg key change-passphrase
+  export BORG_PASSPHRASE="$BORG_NEW_PASSPHRASE"
   echo "[BORG] Passphrase changed successfully for repository '$name'"
 }
