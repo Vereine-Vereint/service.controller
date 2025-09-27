@@ -8,6 +8,10 @@ set -e
 source ./version.sh
 echo "[CORE] $CORE_VERSION ($(git rev-parse --short HEAD))"
 
+set -o allexport
+source ../.env
+set +o allexport
+
 # COMMANDS
 declare -A commands=(
   [help]=":Show this help message"
@@ -18,6 +22,7 @@ cmd_help() {
 
 # FUNCTIONS
 source ./func_help.sh
+source ./controller_borg.sh
 
 # MAIN
 main() {
@@ -112,7 +117,5 @@ cmd_update() {
   git pull origin main
   echo "Controller updated to latest version"
 }
-
-# TODO import command
 
 main "$@"
