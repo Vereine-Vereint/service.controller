@@ -129,7 +129,7 @@ borg_backup() {
 }
 
 borg_check_git_before_restore() {
-  rm -rf $BASE_DIR/tmp/$SERVICE_DIR_NAME/.git #TODO check first, ask user if it should be deleted
+  rm -rf $BASE_DIR/.tmp/$SERVICE_DIR_NAME/.git #TODO check first, ask user if it should be deleted
   # check if .git folder exists
   if [ ! -d "$SERVICE_DIR/.git" ]; then
     echo "[BORG] No .git folder found in $SERVICE_DIR_NAME."
@@ -156,8 +156,8 @@ borg_check_git_before_restore() {
   fi
 
   echo "[BORG] Securing .git folder before restore..."
-  mkdir -p $BASE_DIR/tmp/$SERVICE_DIR_NAME
-  mv .git $BASE_DIR/tmp/$SERVICE_DIR_NAME/
+  mkdir -p $BASE_DIR/.tmp/$SERVICE_DIR_NAME
+  mv .git $BASE_DIR/.tmp/$SERVICE_DIR_NAME/
 }
 
 borg_check_git_after_restore() {
@@ -166,7 +166,7 @@ borg_check_git_after_restore() {
   fi
   echo "[BORG] Restoring .git folder after restore..."
   sudo rm -rf .git
-  mv $BASE_DIR/tmp/$SERVICE_DIR_NAME/.git ./
+  mv $BASE_DIR/.tmp/$SERVICE_DIR_NAME/.git ./
 }
 
 borg_restore-fresh() {
@@ -201,18 +201,18 @@ borg_restore-diff() {
   borg_check_git_before_restore
 
   echo "[BORG] Mounting the backup..."
-  mkdir -p "$BASE_DIR/tmp/$SERVICE_DIR_NAME/mnt"
-  sudo -E borg mount --progress "::$name" "$BASE_DIR/tmp/$SERVICE_DIR_NAME/mnt"
+  mkdir -p "$BASE_DIR/.tmp/$SERVICE_DIR_NAME/mnt"
+  sudo -E borg mount --progress "::$name" "$BASE_DIR/.tmp/$SERVICE_DIR_NAME/mnt"
 
   set +e # disable exit on error
 
   echo "[BORG] Restoring the differences from backup..."
   # Use --info=progress2 to show only the overall progress percentage
-  sudo rsync -ah --chown=$USER:$USER --info=progress2 --delete "$BASE_DIR/tmp/$SERVICE_DIR_NAME/mnt/" "$SERVICE_DIR"
+  sudo rsync -ah --chown=$USER:$USER --info=progress2 --delete "$BASE_DIR/.tmp/$SERVICE_DIR_NAME/mnt/" "$SERVICE_DIR"
   restoreExitCode=$?
 
   echo "[BORG] Unmounting the backup..."
-  sudo -E borg umount "$BASE_DIR/tmp/$SERVICE_DIR_NAME/mnt"
+  sudo -E borg umount "$BASE_DIR/.tmp/$SERVICE_DIR_NAME/mnt"
   unmountExitCode=$?
 
   set -e # enable exit on error
