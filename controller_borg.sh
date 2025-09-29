@@ -3,9 +3,8 @@
 declare -A borg_controller_commands=(
 )
 
-# TODO borg import 
 # TODO borg list
-# TODO borg change-passphrase
+# TODO borg import 
 # TODO borg delete
 
 commands+=([borg]=":Manage global Borg Services operations")

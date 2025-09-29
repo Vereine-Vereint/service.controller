@@ -59,7 +59,7 @@ else
     if [ -z "$cron_schedule" ]; then
       cron_schedule="0 3 * * *"
     fi
-    (crontab -l 2>/dev/null; echo "$cron_schedule $BASE_DIR/controller.sh borg autobackup-now >> $BASE_DIR/backup.log 2>&1") | crontab -
+    (crontab -l 2>/dev/null; echo "$cron_schedule $BASE_DIR/controller.sh borg autobackup-now > $BASE_DIR/backup.log 2>&1") | crontab -
     echo "Cronjob added for automatic backups."
   fi
 fi
