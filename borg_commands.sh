@@ -100,12 +100,13 @@ borg_init() {
 
 borg_info() {
   echo "[BORG] using BORG_REPO $BORG_REPO"
-  echo "[BORG] Service information:"
-  if crontab -l | grep -q "$SERVICE_NAME/service.sh borg"; then
-    echo "[BORG] Automatic backups are enabled."
-  else
-    echo "[BORG] Automatic backups are disabled."
-  fi
+  #TODO fix the crontab check, it is now in the global .env
+  # echo "[BORG] Service information:"
+  # if crontab -l | grep -q "$SERVICE_NAME/service.sh borg"; then
+  #   echo "[BORG] Automatic backups are enabled."
+  # else
+  #   echo "[BORG] Automatic backups are disabled."
+  # fi
   echo
   echo "[BORG] Repository information:"
   sudo -E borg info
