@@ -1,0 +1,66 @@
+networks:
+  default:
+  traefik:
+    external: true
+
+services:
+  onlyoffice:
+    image: onlyoffice/documentserver:8.2
+    depends_on:
+      - onlyoffice-db
+      - onlyoffice-rabbitmq
+    environment:
+      - DB_TYPE=postgres
+      - DB_HOST=onlyoffice-db
+      - DB_PORT=5432
+      - DB_NAME=onlyoffice
+      - DB_USER=onlyoffice
+      - AMQP_URI=amqp://guest:guest@onlyoffice-rabbitmq
+      # Uncomment strings below to enable the JSON Web Token validation.
+      #- JWT_ENABLED=true
+      - JWT_SECRET=${JWT_SECRET}
+      #- JWT_HEADER=Authorization
+      #- JWT_IN_BODY=true
+    networks:
+      - default
+      - traefik
+    # ports:
+      # - '80:80'
+      # - '443:443'
+    stdin_open: true
+    restart: unless-stopped
+    stop_grace_period: 60s
+    volumes:
+       # - /var/www/onlyoffice/Data # certificates, not needed with proxy
+       - ./volumes/log:/var/log/onlyoffice
+       - ./volumes/lib:/var/lib/onlyoffice/documentserver/App_Data/cache/files
+       - ./volumes/www:/var/www/onlyoffice/documentserver-example/public/files
+       - ./volumes/fonts:/usr/share/fonts
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.onlyoffice.rule=Host(`${ONLYOFFICE_DOMAIN}`)"
+      - "traefik.http.routers.onlyoffice.entrypoints=websecure"
+      # - "traefik.http.services.onlyoffice.loadbalancer.server.port=80"
+      # - "traefik.http.services.onlyoffice.loadbalancer.passhostheader=true"
+      - "traefik.http.middlewares.onlyoffice-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
+      - "traefik.http.routers.onlyoffice.middlewares=onlyoffice-headers"
+
+  onlyoffice-rabbitmq:
+    image: rabbitmq:4.0
+    restart: unless-stopped
+    # expose:
+    #   - '5672'
+
+  onlyoffice-db:
+    container_name: onlyoffice-db
+    image: postgres:12
+    environment:
+      - POSTGRES_DB=onlyoffice
+      - POSTGRES_USER=onlyoffice
+      - POSTGRES_HOST_AUTH_METHOD=trust
+    restart: unless-stopped
+    # expose:
+    #   - '5432'
+    volumes:
+      - ./volumes/db:/var/lib/postgresql
