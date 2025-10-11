@@ -1,0 +1,140 @@
+networks:
+  default:
+  traefik:
+    external: true
+
+x-shared:
+  zammad-service: &zammad-service
+    environment: &zammad-environment
+      MEMCACHE_SERVERS: ${MEMCACHE_SERVERS}
+      POSTGRESQL_DB: ${POSTGRES_DB}
+      POSTGRESQL_HOST: ${POSTGRES_HOST}
+      POSTGRESQL_USER: ${POSTGRES_USER}
+      POSTGRESQL_PASS: ${POSTGRES_PASS}
+      POSTGRESQL_PORT: ${POSTGRES_PORT}
+      POSTGRESQL_OPTIONS: ${POSTGRESQL_OPTIONS:-?pool=50}
+      REDIS_URL: ${REDIS_URL}
+      timezone_default: ${TIMEZONE_DEFAULT}
+      TIMEZONE_DEFAULT: ${TIMEZONE_DEFAULT}
+
+      # Allow passing in these variables via .env:
+      AUTOWIZARD_JSON:
+      AUTOWIZARD_RELATIVE_PATH:
+      ELASTICSEARCH_ENABLED:
+      ELASTICSEARCH_HOST:
+      ELASTICSEARCH_PORT:
+      ELASTICSEARCH_SCHEMA:
+      ELASTICSEARCH_NAMESPACE:
+      ELASTICSEARCH_REINDEX:
+      ELASTICSEARCH_SSL_VERIFY:
+      NGINX_PORT:
+      NGINX_SERVER_NAME:
+      NGINX_SERVER_SCHEME:
+      POSTGRESQL_DB_CREATE:
+      RAILS_TRUSTED_PROXIES:
+      ZAMMAD_WEB_CONCURRENCY:
+      ZAMMAD_SESSION_JOBS:
+      ZAMMAD_PROCESS_SCHEDULED:
+      ZAMMAD_PROCESS_DELAYED_JOBS_WORKERS:
+    image: ${IMAGE_REPO}:${VERSION}
+    restart: unless-stopped
+    volumes:
+      - ./volumes/storage:/opt/zammad/storage
+      - ./volumes/var:/opt/zammad/var
+    depends_on:
+      - zammad-memcached
+      - zammad-postgresql
+      - zammad-redis
+
+services:
+  zammad-backup:
+    command: ["zammad-backup"]
+    depends_on:
+      - zammad-railsserver
+      - zammad-postgresql
+    entrypoint: /usr/local/bin/backup.sh
+    environment:
+      <<: *zammad-environment
+      BACKUP_TIME: "03:00"
+      HOLD_DAYS: "10"
+      TZ: ${TIMEZONE_DEFAULT}
+    image: postgres:${POSTGRES_VERSION}
+    restart: unless-stopped
+    volumes:
+      - ./volumes/backup:/var/tmp/zammad
+      - ./volumes/storage:/opt/zammad/storage:ro
+      - ./volumes/var:/opt/zammad/var:ro
+      - ./scripts/backup.sh:/usr/local/bin/backup.sh:ro
+
+  zammad-elasticsearch:
+    image: bitnami/elasticsearch:${ELASTICSEARCH_VERSION}
+    restart: unless-stopped
+    volumes:
+      - ./volumes/elasticsearch:/bitnami/elasticsearch/data
+
+  zammad-init:
+    <<: *zammad-service
+    command: ["zammad-init"]
+    depends_on:
+      - zammad-postgresql
+    restart: on-failure
+    user: 0:0
+    volumes:
+      - ./volumes/storage:/opt/zammad/storage
+      - ./volumes/var:/opt/zammad/var
+
+  zammad-memcached:
+    command: memcached -m 256M
+    image: memcached:${MEMCACHE_VERSION}
+    restart: unless-stopped
+
+  zammad-nginx:
+    <<: *zammad-service
+    command: ["zammad-nginx"]
+    expose:
+      - "8080"
+    networks:
+      - default
+      - traefik
+    # ports:
+    #   - "${ZAMMAD_PORT}:8080"
+    depends_on:
+      - zammad-railsserver
+    volumes:
+      - ./volumes/var:/opt/zammad/var:ro # required for the zammad-ready check file
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.zammad.rule=Host(`${ZAMMAD_HOST}`)"
+      - "traefik.http.routers.zammad.entrypoints=websecure"
+
+  zammad-postgresql:
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASS}
+    image: postgres:${POSTGRES_VERSION}
+    restart: unless-stopped
+    volumes:
+      - ./volumes/postgresql:/var/lib/postgresql/data
+
+  zammad-railsserver:
+    <<: *zammad-service
+    command: ["zammad-railsserver"]
+
+  zammad-redis:
+    image: redis:${REDIS_VERSION}
+    restart: unless-stopped
+    volumes:
+      - ./volumes/redis:/data
+
+  zammad-scheduler:
+    <<: *zammad-service
+    command: ["zammad-scheduler"]
+    networks:
+      - default
+      - traefik
+
+
+  zammad-websocket:
+    <<: *zammad-service
+    command: ["zammad-websocket"]
