@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenSlides - wird geladen...</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>OpenSlides wird geöffnet...</h2>
+        <p>Falls das Fenster nicht automatisch öffnet, <a href="#" id="manualLink">klicken Sie hier</a>.</p>
+    </div>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const baseUrl = urlParams.get('url') || window.location.origin;
+        
+        // Create a URL that forces cache bypass
+        // Using _r parameter to force reload and bypass cached redirect
+        const targetUrl = baseUrl + '/?_r=' + Date.now();
+        
+        console.log('[Autologin Redirect] Opening OpenSlides with cache bypass...');
+        
+        // Try to open in same window with location.replace (forces hard reload)
+        // The _r parameter should bypass any cached redirect
+        setTimeout(() => {
+            // First clear any OpenSlides caches from this origin if possible
+            if (window.opener || window.parent !== window) {
+                try {
+                    // If we can access the opener/parent, clear its caches
+                    if ('caches' in window) {
+                        caches.keys().then(names => {
+                            names.forEach(name => caches.delete(name));
+                        });
+                    }
+                } catch (e) {
+                    console.log('Cannot clear parent caches:', e);
+                }
+            }
+            
+            // Navigate with hard reload flag
+            window.location.replace(targetUrl);
+        }, 500);
+        
+        // Manual link fallback
+        document.getElementById('manualLink').href = targetUrl;
+    </script>
+</body>
+</html>
