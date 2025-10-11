@@ -24,9 +24,9 @@ set +o allexport
 # ATTACHMENTS
 
 # Setup function that is called before the docker up command
-# att_setup() {
-#   echo "Setting up..."
-# }
+att_setup() {
+  docker network create traefik &>/dev/null || true
+}
 
 # Configure function that is called before the docker up, start and restart commands
 # att_configure() {
