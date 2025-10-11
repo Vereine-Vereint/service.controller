@@ -1,0 +1,86 @@
+global:
+  sendAnonymousUsage: true
+
+# log:
+#   level: INFO # [DEBUG, INFO, WARNING, ERROR, CRITICAL]
+#   format: common # [common, json, logfmt]
+#   filePath: /log/traefik.log
+# accessLog:
+#   format: common # [common, json, logfmt]
+#   filePath: /log/access.log
+
+api:
+  dashboard: true
+  insecure: false
+
+# -- Change EntryPoints here...
+entryPoints:
+  web:
+    address: :80
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+  websecure:
+    address: :443
+    http: # set default tls settings
+      tls:
+        certResolver: production
+        domains:
+          - main: DOMAIN
+            sans:
+              - '*.DOMAIN'
+
+  metrics:
+    address: :8899
+
+certificatesResolvers:
+  staging:
+    acme:
+      email: EMAIL
+      storage: /certs/acme-staging.json
+      caServer: "https://acme-staging-v02.api.letsencrypt.org/directory"
+      dnsChallenge:
+        provider: hetzner
+        resolvers:
+          - "213.133.100.98:53"
+          - "88.198.229.192:53"
+          - "193.47.99.5:53"
+  production:
+    acme:
+      email: EMAIL
+      storage: /certs/acme-production.json
+      caServer: "https://acme-v02.api.letsencrypt.org/directory"
+      dnsChallenge:
+        provider: hetzner
+        resolvers:
+          - "213.133.100.98:53"
+          - "88.198.229.192:53"
+          - "193.47.99.5:53"
+
+# -- (Optional) Disable TLS Cert verification check
+serversTransport:
+  insecureSkipVerify: true
+
+providers:
+  docker:
+    network: traefik
+    exposedByDefault: false
+    # tls:
+    #   insecureSkipVerify: true
+  file:
+    directory: /etc/traefik/conf
+    watch: true
+
+#! PROMETHEUS
+metrics:
+  prometheus:
+    entryPoint: 'metrics'
+    addEntryPointsLabels: true
+    addServicesLabels: true
+    buckets:
+      - 0.100000
+      - 0.300000
+      - 1.200000
+      - 5.000000

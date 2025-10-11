@@ -1,0 +1,25 @@
+http:
+  routers:
+    dashboard:
+      rule: Host(`DOMAIN.de`) && (PathPrefix(`/dashboard`) || PathPrefix(`/api`))
+      entryPoints:
+        - websecure
+      middlewares:
+        - authentik@file
+      service: api@internal
+
+    redirect:
+      rule: Host(`DOMAIN.de`)
+      entryPoints:
+        - websecure
+      middlewares:
+        - authentik@file
+        - redirect-dashboard
+      service: noop@internal
+
+  middlewares:
+    redirect-dashboard:
+      redirectRegex:
+        regex: "^https://DOMAIN.de/.*"
+        replacement: "https://DOMAIN.de/dashboard/"
+        permanent: true

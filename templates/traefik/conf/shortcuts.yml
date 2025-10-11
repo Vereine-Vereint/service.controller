@@ -1,0 +1,44 @@
+{{- $redirects_internal := dict 
+  "e" "example"
+}}
+
+{{- $redirects_external := dict 
+  "example" "example.external.de"
+}}
+
+http:
+  middlewares:
+    {{- range $key, $value := $redirects_internal }}
+    redirect-internal-{{ $key }}:
+      redirectRegex:
+        regex: "^https://{{ $key }}.uso-ev.de/(.*)"
+        replacement: "https://{{ $value }}.uso-ev.de/${1}"
+        permanent: true
+    {{- end }}
+    {{- range $key, $value := $redirects_external }}
+    redirect-external-{{ $key }}:
+      redirectRegex:
+        regex: "^https://{{ $key }}.uso-ev.de/(.*)"
+        replacement: "https://{{ $value }}/${1}"
+        permanent: true
+    {{- end }}
+
+  routers:
+    {{- range $key, $value := $redirects_internal }}
+    redirect-internal-{{ $key }}:
+      rule: Host(`{{ $key }}.uso-ev.de`)
+      entryPoints:
+        - websecure
+      middlewares:
+        - redirect-internal-{{ $key }}
+      service: noop@internal
+    {{- end }}
+    {{- range $key, $value := $redirects_external }}
+    redirect-external-{{ $key }}:
+      rule: Host(`{{ $key }}.uso-ev.de`)
+      entryPoints:
+        - websecure
+      middlewares:
+        - redirect-external-{{ $key }}
+      service: noop@internal
+    {{- end }}

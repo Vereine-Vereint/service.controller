@@ -1,0 +1,27 @@
+networks:
+  traefik:
+    external: true
+
+services:
+  traefik:
+    image: traefik:v3.5
+    ports:
+      - 80:80
+      - 443:443
+      # # Dashboard, if api.dashboard and api.insecure are also enabled
+      # - 8080:8080
+      - 8899:8899
+
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./conf/:/etc/traefik/conf/
+      - ./volumes/certs/:/certs/
+      # - ./volumes/log:/log/
+
+    environment:
+      HETZNER_API_KEY: "${HETZNER_DNS_API_TOKEN}"
+
+    networks:
+      - traefik
+    restart: unless-stopped
