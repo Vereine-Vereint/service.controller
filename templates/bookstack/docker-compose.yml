@@ -1,0 +1,49 @@
+networks:
+  default:
+  traefik:
+    external: true
+
+services:
+  bookstack:
+    container_name: bookstack
+    image: linuxserver/bookstack:24.02.2
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - APP_URL=https://${BOOKSTACK_DOMAIN}/
+      - DB_HOST=bookstack-db
+      - DB_PORT=3306
+      - DB_USER=${MYSQL_USER}
+      - DB_PASS=${MYSQL_BOOKSTACK_PASSWORD}
+      - DB_DATABASE=${MYSQL_DATABASE}
+
+    env_file:
+      - .env
+
+    volumes:
+      - ./volumes/data:/config
+    restart: unless-stopped
+    networks:
+      - traefik # add to traefik network
+      - default # add to default (stack internal) network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.bookstack.rule=Host(`${BOOKSTACK_DOMAIN}`)"
+      - "traefik.http.routers.bookstack.entrypoints=websecure"
+    depends_on:
+      - bookstack-db
+
+  bookstack-db:
+    container_name: bookstack-db
+    image: linuxserver/mariadb:10.11.6
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - TZ=Europe/Berlin
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_BOOKSTACK_PASSWORD}
+    volumes:
+      - ./volumes/db:/config
+    restart: unless-stopped
