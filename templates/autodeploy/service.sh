@@ -23,10 +23,22 @@ set +o allexport
 
 # ATTACHMENTS
 
-#! SETUP THE GITHUB RUNNER INITIALLY:
-# ./config.sh --url https://github.com/CONNECTA-Regensburg --token TOKEN --unattended  --name EXAMPLE-$(hostname) --replace --labels EXAMPLE
+# 1. Go to your GitHub repository -> Settings -> Runners -> New self-hosted runner
+# 2. execute the download steps in the service directory
+# 3. run the following command, replace EXAMPLE with your service name
+#   ./config.sh --url https://github.com/CONNECTA-Regensburg --token TOKEN --unattended  --name EXAMPLE-$(hostname) --replace --labels EXAMPLE
 
 att_setup() {
+  if [ ! -d actions-runner ]; then
+    echo "ACTION RUNNER not configured. Please set it up first."
+    echo
+    echo "1. Go to your GitHub repository -> Settings -> Runners -> New self-hosted runner"
+    echo "2. execute the download steps in the service directory"
+    echo "3. run the following command, replace EXAMPLE with your service name"
+    echo "   ./config.sh --url https://github.com/CONNECTA-Regensburg --token TOKEN --unattended  --name EXAMPLE-$(hostname) --replace --labels EXAMPLE"
+    exit 1
+  fi
+
   cd actions-runner
   if ! sudo ./svc.sh status | grep -q "active (running)"; then
     echo "Setting up GitHub Actions Runner service..."
