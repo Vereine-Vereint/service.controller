@@ -78,6 +78,7 @@ docker_down() {
   docker compose -p $SERVICE_DIR_NAME down --remove-orphans "$@"
 
   exec_attachment post-stop
+  exec_attachment remove
 }
 
 docker_up() {
