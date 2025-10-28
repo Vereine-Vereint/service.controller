@@ -158,7 +158,7 @@ borg_check_git_before_restore() {
 
   echo "[BORG] Securing .git folder before restore..."
   mkdir -p $BASE_DIR/.tmp/$SERVICE_DIR_NAME
-  mv .git $BASE_DIR/.tmp/$SERVICE_DIR_NAME/
+  sudo mv .git $BASE_DIR/.tmp/$SERVICE_DIR_NAME/
 }
 
 borg_check_git_after_restore() {
@@ -167,7 +167,7 @@ borg_check_git_after_restore() {
   fi
   echo "[BORG] Restoring .git folder after restore..."
   sudo rm -rf .git
-  mv $BASE_DIR/.tmp/$SERVICE_DIR_NAME/.git ./
+  sudo mv $BASE_DIR/.tmp/$SERVICE_DIR_NAME/.git ./
 }
 
 borg_restore-fresh() {
@@ -209,7 +209,7 @@ borg_restore-diff() {
 
   echo "[BORG] Restoring the differences from backup..."
   # Use --info=progress2 to show only the overall progress percentage
-  sudo rsync -ah --chown=$USER:$USER --info=progress2 --delete "$BASE_DIR/.tmp/$SERVICE_DIR_NAME/mnt/" "$SERVICE_DIR"
+  sudo rsync -ah --info=progress2 --delete "$BASE_DIR/.tmp/$SERVICE_DIR_NAME/mnt/" "$SERVICE_DIR"
   restoreExitCode=$?
 
   echo "[BORG] Unmounting the backup..."
