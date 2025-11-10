@@ -63,7 +63,7 @@ x-default-environment: &default-environment
 
 services:
   proxy:
-    image: ghcr.io/openslides/openslides/openslides-proxy:latest
+    image: ghcr.io/openslides/openslides/openslides-proxy:${OPENSLIDES_VERSION}
     depends_on:
       - client
       - backendAction
@@ -100,7 +100,7 @@ services:
       - cert_key
 
   client:
-    image: ghcr.io/openslides/openslides/openslides-client:latest
+    image: ghcr.io/openslides/openslides/openslides-client:${OPENSLIDES_VERSION}
     depends_on:
       - backendAction
       - backendPresenter
@@ -116,7 +116,7 @@ services:
       - frontend
 
   backendAction:
-    image: ghcr.io/openslides/openslides/openslides-backend:latest
+    image: ghcr.io/openslides/openslides/openslides-backend:${OPENSLIDES_VERSION}
     depends_on:
       - datastoreWriter
       - auth
@@ -147,7 +147,7 @@ services:
       - postgres_password
 
   backendPresenter:
-    image: ghcr.io/openslides/openslides/openslides-backend:latest
+    image: ghcr.io/openslides/openslides/openslides-backend:${OPENSLIDES_VERSION}
     depends_on:
       - auth
       - postgres
@@ -163,7 +163,7 @@ services:
       - postgres_password
 
   backendManage:
-    image: ghcr.io/openslides/openslides/openslides-backend:latest
+    image: ghcr.io/openslides/openslides/openslides-backend:${OPENSLIDES_VERSION}
     depends_on:
       - datastoreWriter
       - postgres
@@ -182,7 +182,7 @@ services:
       - superadmin
 
   datastoreReader:
-    image: ghcr.io/openslides/openslides/openslides-datastore-reader:latest
+    image: ghcr.io/openslides/openslides/openslides-datastore-reader:${OPENSLIDES_VERSION}
     depends_on:
       - postgres
     environment:
@@ -194,7 +194,7 @@ services:
       - postgres_password
 
   datastoreWriter:
-    image: ghcr.io/openslides/openslides/openslides-datastore-writer:latest
+    image: ghcr.io/openslides/openslides/openslides-datastore-writer:${OPENSLIDES_VERSION}
     depends_on:
       - postgres
       - redis
@@ -220,7 +220,7 @@ services:
       - postgres_password
 
   autoupdate:
-    image: ghcr.io/openslides/openslides/openslides-autoupdate:latest
+    image: ghcr.io/openslides/openslides/openslides-autoupdate:${OPENSLIDES_VERSION}
     depends_on:
       - datastoreReader
       - redis
@@ -235,7 +235,7 @@ services:
       - postgres_password
 
   search:
-    image: ghcr.io/openslides/openslides/openslides-search:latest
+    image: ghcr.io/openslides/openslides/openslides-search:${OPENSLIDES_VERSION}
     depends_on:
       - datastoreReader
       - postgres
@@ -251,7 +251,7 @@ services:
       - postgres_password
 
   auth:
-    image: ghcr.io/openslides/openslides/openslides-auth:latest
+    image: ghcr.io/openslides/openslides/openslides-auth:${OPENSLIDES_VERSION}
     depends_on:
       - datastoreReader
       - redis
@@ -266,7 +266,7 @@ services:
       - internal_auth_password
 
   vote:
-    image: ghcr.io/openslides/openslides/openslides-vote:latest
+    image: ghcr.io/openslides/openslides/openslides-vote:${OPENSLIDES_VERSION}
     depends_on:
       - datastoreReader
       - auth
@@ -291,7 +291,7 @@ services:
       - data
 
   media:
-    image: ghcr.io/openslides/openslides/openslides-media:latest
+    image: ghcr.io/openslides/openslides/openslides-media:${OPENSLIDES_VERSION}
     depends_on:
       - postgres
     environment:
@@ -305,7 +305,7 @@ services:
       - postgres_password
 
   icc:
-    image: ghcr.io/openslides/openslides/openslides-icc:latest
+    image: ghcr.io/openslides/openslides/openslides-icc:${OPENSLIDES_VERSION}
     depends_on:
       - datastoreReader
       - postgres
@@ -321,7 +321,7 @@ services:
       - postgres_password
 
   manage:
-    image: ghcr.io/openslides/openslides/openslides-manage:latest
+    image: ghcr.io/openslides/openslides/openslides-manage:${OPENSLIDES_VERSION}
     depends_on:
       - datastoreReader
       - backendManage
