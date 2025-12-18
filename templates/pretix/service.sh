@@ -42,11 +42,13 @@ att_post-start() {
 }
 
 att_pre-stop() {
+  set +e
   echo "[$SERVICE_NAME] Disabling cronjob..."
   cronjob=$(crontab -l | grep "$SERVICE_DIR/service.sh docker exec")
   crontab -l | grep -v "$SERVICE_DIR/service.sh docker exec" | crontab -
   echo "[CRON] Removed the following cronjob:"
   echo "$cronjob"
+  set -e
 }
 
 att_post-setup() {
