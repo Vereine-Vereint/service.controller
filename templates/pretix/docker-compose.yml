@@ -1,0 +1,61 @@
+networks:
+  default:
+  traefik:
+    external: true
+
+services:
+  pretix:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      - pretix-db
+      - pretix-redis
+    volumes:
+      - ./volumes/data:/data
+      - ./volumes/pretix:/etc/pretix
+      - ./pretix.cfg:/etc/pretix/pretix.cfg
+    # ports:
+    #   - "8000:80"
+    networks:
+      - traefik
+      - default
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pretix.rule=Host(`${PRETIX_DOMAIN}`)"
+      - "traefik.http.routers.pretix.entrypoints=websecure"
+      - "traefik.http.routers.pretix.priority=2"
+
+  pretix-db:
+    image: postgres:13-alpine3.19
+    restart: unless-stopped
+    # ports:
+    #   - "5432:5432"
+    environment:
+      - POSTGRES_USER=pretix
+      - POSTGRES_PASSWORD=${PRETIX_DB_PASSWORD}
+      - POSTGRES_DB=pretix
+    volumes:
+      - ./volumes/db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 10s
+      timeout: 5s
+
+  pretix-redis:
+    image: redis:alpine3.19
+    restart: unless-stopped
+    # ports:
+    #   - "6379:6379"
+    healthcheck:
+      test: ["CMD-SHELL", "[ \"$(redis-cli ping)\" = \"PONG\" ]"]
+      interval: 10s
+      timeout: 3s
+
+  errorpage-service:
+    image: nginx:alpine
+    restart: unless-stopped
+    volumes:
+      - ./error-pages:/usr/share/nginx/html:ro
+    networks:
+      - traefik
