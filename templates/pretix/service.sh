@@ -22,6 +22,12 @@ cmd_exec() {
 
 # ATTACHMENTS
 
+att_configure() {
+  echo "[$SERVICE_NAME] Configuring Pretix..."
+  mkdir -p $SERVICE_DIR/volumes/data
+  chmod 777 $SERVICE_DIR/volumes/data
+}
+
 att_pull() {
   if [[ -n "$PRETIX_EXTENSIONS" ]]; then
     docker pull pretix/standalone:stable
