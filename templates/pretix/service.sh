@@ -24,8 +24,8 @@ cmd_exec() {
 
 att_configure() {
   echo "[$SERVICE_NAME] Configuring Pretix..."
-  mkdir -p $SERVICE_DIR/volumes/data
-  chmod 777 $SERVICE_DIR/volumes/data
+  sudo mkdir -p $SERVICE_DIR/volumes/data
+  sudo chmod 777 $SERVICE_DIR/volumes/data
 }
 
 att_pull() {
