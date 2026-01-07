@@ -150,7 +150,7 @@ cmd_remove() {
     exit 0
   fi
 
-  rm -rf "$BASE_DIR/$service_name"
+  sudo rm -rf "$BASE_DIR/$service_name"
   echo "Service '$service_name' removed"
 }
 
