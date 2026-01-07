@@ -106,9 +106,14 @@ cmd_import() {
     exit 1
   fi
 
-  BORG_RSH="$(echo $BORG_RSH | sed "s/~/\/home\/$USER/g")"
-  export BORG_REPO="$BORG_REPO_BASE/$name"
+  export BORG_RSH="$(echo $BORG_RSH | sed "s/~/\/home\/$USER/g")"
+  export BORG_REPO="$BORG_REPO_BASE/$service_name"
+  export BORG_PASSPHRASE="$BORG_PASSPHRASE"
   name=$(sudo -E borg list --sort-by timestamp | tail -n 1 | awk '{print $1}')
+  if [ -z "$name" ]; then
+    echo "[CONTROLLER] No backups found for service '$service_name'"
+    exit 1
+  fi
 
   mkdir -p "$BASE_DIR/$service_name"
   cd "$BASE_DIR/$service_name"
