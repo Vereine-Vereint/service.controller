@@ -85,7 +85,7 @@ docker_up() {
   exec_attachment setup
   exec_attachment configure
   exec_attachment pre-start
-  
+
   docker compose -p $SERVICE_DIR_NAME up -d "$@"
 
   exec_attachment post-setup
