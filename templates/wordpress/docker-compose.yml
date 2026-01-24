@@ -1,0 +1,42 @@
+networks:
+  default:
+  traefik:
+    external: true
+
+services:
+  wordpress:
+
+    image: wordpress:6.9.0
+    restart: unless-stopped
+    environment:
+      WORDPRESS_DB_HOST: wordpress-db
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: ${MYSQL_WORDPRESS_PASSWORD}
+      WORDPRESS_DB_NAME: wordpress
+    volumes:
+      - ./volumes/data:/var/www/html
+    depends_on:
+      - wordpress-db
+    networks:
+    - traefik # add to traefik network
+    - default # add to default (stack internal) network
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.wordpress.rule=Host(`${WORDPRESS_DOMAIN}`)"
+      - "traefik.http.routers.wordpress.entrypoints=websecure"
+
+  wordpress-db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: ${MYSQL_WORDPRESS_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - ./volumes/db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "--silent"]
+      timeout: 10s
+
