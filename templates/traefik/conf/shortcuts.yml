@@ -11,14 +11,14 @@ http:
     {{- range $key, $value := $redirects_internal }}
     redirect-internal-{{ $key }}:
       redirectRegex:
-        regex: "^https://{{ $key }}.uso-ev.de/(.*)"
-        replacement: "https://{{ $value }}.uso-ev.de/${1}"
+        regex: "^https://{{ $key }}.example.de/(.*)"
+        replacement: "https://{{ $value }}.example.de/${1}"
         permanent: true
     {{- end }}
     {{- range $key, $value := $redirects_external }}
     redirect-external-{{ $key }}:
       redirectRegex:
-        regex: "^https://{{ $key }}.uso-ev.de/(.*)"
+        regex: "^https://{{ $key }}.example.de/(.*)"
         replacement: "https://{{ $value }}/${1}"
         permanent: true
     {{- end }}
@@ -26,7 +26,7 @@ http:
   routers:
     {{- range $key, $value := $redirects_internal }}
     redirect-internal-{{ $key }}:
-      rule: Host(`{{ $key }}.uso-ev.de`)
+      rule: Host(`{{ $key }}.example.de`)
       entryPoints:
         - websecure
       middlewares:
@@ -35,7 +35,7 @@ http:
     {{- end }}
     {{- range $key, $value := $redirects_external }}
     redirect-external-{{ $key }}:
-      rule: Host(`{{ $key }}.uso-ev.de`)
+      rule: Host(`{{ $key }}.example.de`)
       entryPoints:
         - websecure
       middlewares:
