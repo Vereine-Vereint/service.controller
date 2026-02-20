@@ -26,13 +26,13 @@ entryPoints:
     address: :443
     http: # set default tls settings
       tls:
-        certResolver: production
+        certResolver: staging # change to production after verifying your configuration
         domains:
           - main: DOMAIN
             sans:
               - '*.DOMAIN'
 
-  metrics:
+  metrics: # for prometheus metrics
     address: :8899
 
 certificatesResolvers:
@@ -43,10 +43,6 @@ certificatesResolvers:
       caServer: "https://acme-staging-v02.api.letsencrypt.org/directory"
       dnsChallenge:
         provider: hetzner
-        resolvers:
-          - "213.133.100.98:53"
-          - "88.198.229.192:53"
-          - "193.47.99.5:53"
   production:
     acme:
       email: EMAIL
@@ -54,10 +50,6 @@ certificatesResolvers:
       caServer: "https://acme-v02.api.letsencrypt.org/directory"
       dnsChallenge:
         provider: hetzner
-        resolvers:
-          - "213.133.100.98:53"
-          - "88.198.229.192:53"
-          - "193.47.99.5:53"
 
 # -- (Optional) Disable TLS Cert verification check
 serversTransport:
