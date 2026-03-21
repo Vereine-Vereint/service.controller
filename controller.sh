@@ -91,67 +91,209 @@ cmd_create() {
 
 }
 
-commands+=([import]="<name>:Import an existing service from borg")
+commands+=([import]="<name...>:Import one or more existing services from borg")
 cmd_import() {
+  if [[ $# -eq 0 ]]; then
+    echo "At least one service name is required"
+    exit 1
+  fi
+
+  local should_up_default="n"
+  local should_up_input
+  read -p "Do you want to start imported services after import? (y/N): " should_up_input
+  should_up_input="${should_up_input:-$should_up_default}"
+
+  local should_up=false
+  case "$should_up_input" in
+  [yY][eE][sS] | [yY])
+    should_up=true
+    ;;
+  *)
+    should_up=false
+    ;;
+  esac
+
   echo "[CONTROLLER] Importing service..."
-  local service_name="$1"
-  if [[ -z "$service_name" ]]; then
-    echo "Service name is required"
-    exit 1
-  fi
+  local summary_lines=()
+  local imported_count=0
+  local failed_count=0
+  local skipped_count=0
 
-  if [[ -d "$BASE_DIR/$service_name" ]]; then
-    echo "Service '$service_name' already exists"
-    echo "Delete the existing service before importing"
-    exit 1
-  fi
+  for service_name in "$@"; do
+    echo "[CONTROLLER] Processing import for '$service_name'..."
 
-  export BORG_RSH="$(echo $BORG_RSH | sed "s/~/\/home\/$USER/g")"
-  export BORG_REPO="$BORG_REPO_BASE/$service_name"
-  export BORG_PASSPHRASE="$BORG_PASSPHRASE"
-  name=$(sudo -E borg list --sort-by timestamp | tail -n 1 | awk '{print $1}')
-  if [ -z "$name" ]; then
-    echo "[CONTROLLER] No backups found for service '$service_name'"
-    exit 1
-  fi
+    if [[ -d "$BASE_DIR/$service_name" ]]; then
+      echo "[CONTROLLER] Service '$service_name' already exists - skipping"
+      skipped_count=$((skipped_count + 1))
+      summary_lines+=("$service_name: exists")
+      continue
+    fi
 
-  mkdir -p "$BASE_DIR/$service_name"
-  cd "$BASE_DIR/$service_name"
+    echo "[CONTROLLER] Looking up latest backup for '$service_name'..."
+    export BORG_RSH="$(echo $BORG_RSH | sed "s/~/\/home\/$USER/g")"
+    export BORG_REPO="$BORG_REPO_BASE/$service_name"
+    export BORG_PASSPHRASE="$BORG_PASSPHRASE"
+    name=$(sudo -E borg list --sort-by timestamp | tail -n 1 | awk '{print $1}')
+    if [ -z "$name" ]; then
+      echo "[CONTROLLER] No backups found for service '$service_name'"
+      failed_count=$((failed_count + 1))
+      summary_lines+=("$service_name: no backup found")
+      continue
+    fi
 
-  echo "[CONTROLLER] Importing repository for service '$service_name' with backup '$name'"
+    echo "[CONTROLLER] Preparing import directory for '$service_name'..."
+    mkdir -p "$BASE_DIR/$service_name"
+    cd "$BASE_DIR/$service_name"
 
-  sudo -E borg extract --progress "::$name"
-  if [ $? -ne 0 ]; then
-    echo "[CONTROLLER] Restore failed"
-    exit 1
-  fi
+    echo "[CONTROLLER] Importing repository for service '$service_name' with backup '$name'"
 
-  echo "[CONTROLLER] Service '$service_name' imported from borg backup"
+    if ! sudo -E borg extract --progress "::$name"; then
+      echo "[CONTROLLER] Restore failed for service '$service_name'"
+      failed_count=$((failed_count + 1))
+      summary_lines+=("$service_name: import failed")
+      continue
+    fi
+
+    echo "[CONTROLLER] Service '$service_name' imported from borg backup"
+    imported_count=$((imported_count + 1))
+
+    if $should_up; then
+      echo "[CONTROLLER] Starting service '$service_name'..."
+      if ! "$BASE_DIR/$service_name/service.sh" up; then
+        echo "[CONTROLLER] Failed to start service '$service_name' after import"
+        failed_count=$((failed_count + 1))
+        summary_lines+=("$service_name: imported but start failed")
+      else
+        summary_lines+=("$service_name: imported and started")
+      fi
+    else
+      echo "[CONTROLLER] Skipping auto-start for '$service_name'"
+      summary_lines+=("$service_name: imported")
+    fi
+  done
+
+  echo
+  echo
+  echo "[CONTROLLER] Import summary: imported=$imported_count, skipped=$skipped_count, failed=$failed_count"
+  for line in "${summary_lines[@]}"; do
+    echo "- $line"
+  done
 }
 
-commands+=([remove]="<name>:Remove an existing service")
+commands+=([remove]="<name...>:Remove one or more existing services")
 cmd_remove() {
-  echo "Removing service..."
-  local service_name="$1"
-  if [[ -z "$service_name" ]]; then
-    echo "Service name is required"
+  if [[ $# -eq 0 ]]; then
+    echo "At least one service name is required"
     exit 1
   fi
 
-  if [[ ! -d "$BASE_DIR/$service_name" ]]; then
-    echo "Service '$service_name' does not exist"
-    exit 1
-  fi
+  local should_down_backup_default="y"
+  local should_down_backup_input
+  read -p "Do you want to stop and backup all services before deletion? (Y/n): " should_down_backup_input
+  should_down_backup_input="${should_down_backup_input:-$should_down_backup_default}"
 
-  # make second check
-  read -p "Are you sure you want to remove service '$service_name'? This action cannot be undone. (y/N): " confirm
-  if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
+  local should_down_backup
+  case "$should_down_backup_input" in
+  [nN][oO] | [nN])
+    should_down_backup=false
+    ;;
+  *)
+    should_down_backup=true
+    ;;
+  esac
+
+  local services_list="$*"
+  if $should_down_backup; then
+    echo "Are you sure you want to stop, backup and delete services: $services_list"
+  else
+    echo "Are you sure you want to DIRECTLY DELETE services: $services_list"
+    echo "This action could delete all data if not backed up or stopped properly - use with backup option to be safer"
+  fi
+  local confirm_input
+  read -p "(y/N): " confirm_input
+  local confirm
+  case "$confirm_input" in
+    [yY][eE][sS] | [yY])
+      confirm=true
+      ;;
+    *)
+      confirm=false
+      ;;
+  esac
+  if ! $confirm; then
     echo "Aborting"
     exit 0
   fi
 
-  sudo rm -rf "$BASE_DIR/$service_name"
-  echo "Service '$service_name' removed"
+  echo "Removing services..."
+
+  local summary_lines=()
+  local removed_count=0
+  local skipped_count=0
+  local failed_count=0
+
+  for service_name in "$@"; do
+    echo "[CONTROLLER] Processing removal for '$service_name'..."
+
+    if [[ ! -d "$BASE_DIR/$service_name" ]]; then
+      echo "Service '$service_name' does not exist - skipping"
+      skipped_count=$((skipped_count + 1))
+      summary_lines+=("$service_name: did not exist")
+      continue
+    fi
+
+    local pre_delete_ok=1
+    if $should_down_backup; then
+      echo "[CONTROLLER] Stopping '$service_name'..."
+      if ! "$BASE_DIR/$service_name/service.sh" down; then
+        echo "[CONTROLLER] Failed to stop '$service_name' - skipping backup and deletion"
+        failed_count=$((failed_count + 1))
+        summary_lines+=("$service_name: stop failed")
+        continue
+      fi
+
+      local backup_name="${HOSTNAME}_$(date +"%Y-%m-%d_%H-%M-%S")_remove"
+      echo "[CONTROLLER] Backing up '$service_name' as '$backup_name'..."
+      if ! "$BASE_DIR/$service_name/service.sh" backup "$backup_name"; then
+        echo "[CONTROLLER] Failed to backup '$service_name' - skipping deletion"
+        failed_count=$((failed_count + 1))
+        summary_lines+=("$service_name: stopped but backup failed")
+        continue
+      fi
+
+      pre_delete_ok=0
+    fi
+
+    if [[ $pre_delete_ok -ne 0 ]] && $should_down_backup; then
+      continue
+    fi
+
+    echo "[CONTROLLER] Removing '$service_name'..."
+    if sudo rm -rf "$BASE_DIR/$service_name"; then
+      echo "Service '$service_name' removed"
+      removed_count=$((removed_count + 1))
+      if $should_down_backup; then
+        summary_lines+=("$service_name: stopped, backed up and deleted")
+      else
+        summary_lines+=("$service_name: deleted")
+      fi
+    else
+      echo "[CONTROLLER] Failed to remove service '$service_name'"
+      failed_count=$((failed_count + 1))
+      if $should_down_backup; then
+        summary_lines+=("$service_name: stopped and backed up, but delete failed")
+      else
+        summary_lines+=("$service_name: delete failed")
+      fi
+    fi
+  done
+
+  echo
+  echo
+  echo "[CONTROLLER] Remove summary: removed=$removed_count, skipped=$skipped_count, failed=$failed_count"
+  for line in "${summary_lines[@]}"; do
+    echo "- $line"
+  done
 }
 
 commands+=([update]=":Update the controller to the latest version")
