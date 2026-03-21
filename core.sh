@@ -5,6 +5,15 @@ source $BASE_DIR/.env
 SERVICE_DIR_NAME=$(basename $SERVICE_DIR)
 BORG_REPO="$BORG_REPO_BASE/$SERVICE_DIR_NAME"
 CORE_DIR="$BASE_DIR/$CORE_DIR_NAME"
+
+ensure_git_safe_directory_all() {
+  if ! git config --global --get-all safe.directory 2>/dev/null | grep -Fxq '*'; then
+    git config --global --add safe.directory '*'
+  fi
+}
+
+ensure_git_safe_directory_all
+
 source $CORE_DIR/version.sh
 echo "[CORE] $CORE_VERSION ($(cd $CORE_DIR && git rev-parse --short HEAD))"
 

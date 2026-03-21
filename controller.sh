@@ -5,6 +5,14 @@ cd $CORE_DIR
 BASE_DIR=$(dirname "$CORE_DIR")
 set -e
 
+ensure_git_safe_directory_all() {
+  if ! git config --global --get-all safe.directory 2>/dev/null | grep -Fxq '*'; then
+    git config --global --add safe.directory '*'
+  fi
+}
+
+ensure_git_safe_directory_all
+
 source ./version.sh
 echo "[CONTROLLER] $CORE_VERSION ($(git rev-parse --short HEAD))"
 
