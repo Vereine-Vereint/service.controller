@@ -187,27 +187,48 @@ cmd_remove() {
     exit 1
   fi
 
-  local should_down_backup_default="y"
-  local should_down_backup_input
-  read -p "Do you want to stop and backup all services before deletion? (Y/n): " should_down_backup_input
-  should_down_backup_input="${should_down_backup_input:-$should_down_backup_default}"
+  local should_stop_default="y"
+  local should_stop_input
+  read -p "Do you want to stop all services before deletion? (Y/n): " should_stop_input
+  should_stop_input="${should_stop_input:-$should_stop_default}"
 
-  local should_down_backup
-  case "$should_down_backup_input" in
+  local should_stop
+  case "$should_stop_input" in
   [nN][oO] | [nN])
-    should_down_backup=false
+    should_stop=false
     ;;
   *)
-    should_down_backup=true
+    should_stop=true
+    ;;
+  esac
+
+  local should_backup_default="y"
+  local should_backup_input
+  read -p "Do you want to backup all services before deletion? (Y/n): " should_backup_input
+  should_backup_input="${should_backup_input:-$should_backup_default}"
+
+  local should_backup
+  case "$should_backup_input" in
+  [nN][oO] | [nN])
+    should_backup=false
+    ;;
+  *)
+    should_backup=true
     ;;
   esac
 
   local services_list="$*"
-  if $should_down_backup; then
+  if $should_stop && $should_backup; then
     echo "Are you sure you want to stop, backup and delete services: $services_list"
+  elif $should_stop; then
+    echo "Are you sure you want to stop and delete services: $services_list"
+    echo "This action is IRREVERSIBLE and could delete all data if not backed up properly - use with backup option to be safer"
+  elif $should_backup; then
+    echo "Are you sure you want to backup and delete services: $services_list"
+    echo "This action could leave unwanted running services if not stopped properly - use with stop option to be safer"
   else
     echo "Are you sure you want to DIRECTLY DELETE services: $services_list"
-    echo "This action could delete all data if not backed up or stopped properly - use with backup option to be safer"
+    echo "This action is IRREVERSIBLE and could delete all data if not backed up properly and leave unwanted running services if not stopped properly - use with stop and backup options to be safer"
   fi
   local confirm_input
   read -p "(y/N): " confirm_input
@@ -242,46 +263,58 @@ cmd_remove() {
       continue
     fi
 
-    local pre_delete_ok=1
-    if $should_down_backup; then
+    local did_stop=false
+    local did_backup=false
+
+    if $should_stop; then
       echo "[CONTROLLER] Stopping '$service_name'..."
       if ! "$BASE_DIR/$service_name/service.sh" down; then
-        echo "[CONTROLLER] Failed to stop '$service_name' - skipping backup and deletion"
+        echo "[CONTROLLER] Failed to stop '$service_name' - skipping deletion"
         failed_count=$((failed_count + 1))
         summary_lines+=("$service_name: stop failed")
         continue
       fi
+      did_stop=true
+    fi
 
+    if $should_backup; then
       local backup_name="${HOSTNAME}_$(date +"%Y-%m-%d_%H-%M-%S")_remove"
       echo "[CONTROLLER] Backing up '$service_name' as '$backup_name'..."
       if ! "$BASE_DIR/$service_name/service.sh" backup "$backup_name"; then
         echo "[CONTROLLER] Failed to backup '$service_name' - skipping deletion"
         failed_count=$((failed_count + 1))
-        summary_lines+=("$service_name: stopped but backup failed")
+        if $did_stop; then
+          summary_lines+=("$service_name: stopped but backup failed")
+        else
+          summary_lines+=("$service_name: backup failed")
+        fi
         continue
       fi
-
-      pre_delete_ok=0
-    fi
-
-    if [[ $pre_delete_ok -ne 0 ]] && $should_down_backup; then
-      continue
+      did_backup=true
     fi
 
     echo "[CONTROLLER] Removing '$service_name'..."
     if sudo rm -rf "$BASE_DIR/$service_name"; then
       echo "Service '$service_name' removed"
       removed_count=$((removed_count + 1))
-      if $should_down_backup; then
+      if $did_stop && $did_backup; then
         summary_lines+=("$service_name: stopped, backed up and deleted")
+      elif $did_stop; then
+        summary_lines+=("$service_name: stopped and deleted")
+      elif $did_backup; then
+        summary_lines+=("$service_name: backed up and deleted")
       else
         summary_lines+=("$service_name: deleted")
       fi
     else
       echo "[CONTROLLER] Failed to remove service '$service_name'"
       failed_count=$((failed_count + 1))
-      if $should_down_backup; then
+      if $did_stop && $did_backup; then
         summary_lines+=("$service_name: stopped and backed up, but delete failed")
+      elif $did_stop; then
+        summary_lines+=("$service_name: stopped, but delete failed")
+      elif $did_backup; then
+        summary_lines+=("$service_name: backed up, but delete failed")
       else
         summary_lines+=("$service_name: delete failed")
       fi
