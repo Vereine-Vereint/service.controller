@@ -298,6 +298,144 @@ borg_break-lock() {
   echo "[BORG] Repository lock freed"
 }
 
+borg_autobackup_services_read() {
+  autobackup_services=()
+  local backup_file="$BASE_DIR/.backup"
+  local env_file="$BASE_DIR/.env"
+  local raw_services="${BORG_AUTOBACKUP_SERVICES:-}"
+  local parsed_services=()
+  local service
+
+  if [[ ! -f "$backup_file" ]]; then
+    if [[ -n "$raw_services" ]]; then
+      IFS=',' read -r -a parsed_services <<< "$raw_services"
+      for service in "${parsed_services[@]}"; do
+        service="$(echo "$service" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+        if [[ -z "$service" ]]; then
+          continue
+        fi
+        autobackup_services+=("$service")
+      done
+
+      if ! borg_autobackup_services_write; then
+        echo "[BORG] Failed to migrate legacy BORG_AUTOBACKUP_SERVICES to $backup_file"
+        return 1
+      fi
+
+      if [[ -f "$env_file" ]]; then
+        local tmp_env_file
+        tmp_env_file="$(mktemp)"
+        awk '!/^[[:space:]]*BORG_AUTOBACKUP_SERVICES=/' "$env_file" > "$tmp_env_file" || {
+          rm -f "$tmp_env_file"
+          return 1
+        }
+        mv "$tmp_env_file" "$env_file" || {
+          rm -f "$tmp_env_file"
+          return 1
+        }
+      fi
+
+      unset BORG_AUTOBACKUP_SERVICES
+      export BORG_AUTOBACKUP_SERVICES=""
+      echo "[BORG] Migrated legacy BORG_AUTOBACKUP_SERVICES to $backup_file"
+      return 0
+    fi
+
+    if ! touch "$backup_file"; then
+      echo "[BORG] Failed to create $backup_file"
+      return 1
+    fi
+  fi
+
+  while IFS= read -r service || [[ -n "$service" ]]; do
+    service="$(echo "$service" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+    if [[ -z "$service" ]]; then
+      continue
+    fi
+    autobackup_services+=("$service")
+  done < "$backup_file"
+
+  return 0
+}
+
+borg_autobackup_services_write() {
+  local backup_file="$BASE_DIR/.backup"
+  local service
+  local tmp_file
+
+  tmp_file="$(mktemp)"
+
+  for service in "${autobackup_services[@]}"; do
+    if [[ -z "$service" ]]; then
+      continue
+    fi
+    echo "$service" >> "$tmp_file" || {
+      rm -f "$tmp_file"
+      return 1
+    }
+  done
+
+  mv "$tmp_file" "$backup_file" || {
+    rm -f "$tmp_file"
+    return 1
+  }
+
+  return 0
+}
+
+borg_autobackup-enable() {
+  local service
+
+  if ! borg_autobackup_services_read; then
+    return 1
+  fi
+
+  for service in "${autobackup_services[@]}"; do
+    if [[ "$service" == "$SERVICE_DIR_NAME" ]]; then
+      return 0
+    fi
+  done
+
+  autobackup_services+=("$SERVICE_DIR_NAME")
+  if ! borg_autobackup_services_write; then
+    echo "[BORG] Failed to update $BASE_DIR/.backup"
+    return 1
+  fi
+
+  echo "[BORG] Enabled autobackup for '$SERVICE_DIR_NAME'"
+  return 0
+}
+
+borg_autobackup-disable() {
+  local service
+  local updated_services=()
+  local removed=false
+
+  if ! borg_autobackup_services_read; then
+    return 1
+  fi
+
+  for service in "${autobackup_services[@]}"; do
+    if [[ "$service" == "$SERVICE_DIR_NAME" ]]; then
+      removed=true
+      continue
+    fi
+    updated_services+=("$service")
+  done
+
+  autobackup_services=("${updated_services[@]}")
+  if ! borg_autobackup_services_write; then
+    echo "[BORG] Failed to update $BASE_DIR/.backup"
+    return 1
+  fi
+
+  if $removed; then
+    echo "[BORG] Disabled autobackup for '$SERVICE_DIR_NAME'"
+  fi
+
+  return 0
+}
+
 borg_autobackup-now() {
   if [ ! -z "$1" ]; then
     $SERVICE_DIR/service.sh borg autobackup-now > $1 2>&1

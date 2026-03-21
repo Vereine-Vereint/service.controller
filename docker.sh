@@ -79,6 +79,10 @@ docker_down() {
 
   exec_attachment post-stop
   exec_attachment remove
+
+  if ! borg_autobackup-disable; then
+    echo "[BORG] Warning: could not disable controller autobackup for $SERVICE_DIR_NAME"
+  fi
 }
 
 docker_up() {
@@ -91,6 +95,10 @@ docker_up() {
   exec_attachment post-setup
   exec_attachment post-configure
   exec_attachment post-start
+
+  if ! borg_autobackup-enable; then
+    echo "[BORG] Warning: could not enable controller autobackup for $SERVICE_DIR_NAME"
+  fi
 }
 
 docker_start() {

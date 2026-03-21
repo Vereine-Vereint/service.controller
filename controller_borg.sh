@@ -3,6 +3,10 @@
 declare -A borg_controller_commands=(
 )
 
+if ! declare -f borg_autobackup_services_read >/dev/null; then
+  source "$CORE_DIR/borg_commands.sh"
+fi
+
 # TODO borg list
 # TODO borg import 
 # TODO borg delete
@@ -55,9 +59,19 @@ borg_controller_change-passphrase() {
 borg_controller_commands+=([autobackup-now]=":Create a new backup for all enabled services immediately")
 borg_controller_autobackup-now() {
   echo "[CONTROLLER] Creating a new backup for all enabled services..."
-  # Split BORG_AUTOBACKUP_SERVICES into an array
-  IFS=',' read -r -a services <<< "$BORG_AUTOBACKUP_SERVICES"
-  for service in "${services[@]}"; do
+  local service
+
+  if ! borg_autobackup_services_read; then
+    echo "[CONTROLLER] Failed to read autobackup service list"
+    return 1
+  fi
+
+  if [[ ${#autobackup_services[@]} -eq 0 ]]; then
+    echo "[CONTROLLER] No services configured for autobackup"
+    return 0
+  fi
+
+  for service in "${autobackup_services[@]}"; do
     echo
     echo "[CONTROLLER] ######################################## Backing up service: $service"
     # Implement the backup logic for each service here

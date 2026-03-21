@@ -14,6 +14,8 @@ declare -A borg_commands=(
   [prune]=":Prune old backups"
 
   ["break-lock"]=":Break the repository lock !USE WITH CAUTION!"
+  ["autobackup-enable"]=":Enable this service in controller autobackup list"
+  ["autobackup-disable"]=":Disable this service in controller autobackup list"
 
   ["autobackup-now"]="<logfile>:Automatically backup and prune now"
 )
@@ -35,7 +37,9 @@ cmd_borg() {
     exit 1
   fi
 
-  borg_check
+  if [[ "$command" != "autobackup-enable" && "$command" != "autobackup-disable" ]]; then
+    borg_check
+  fi
 
   BORG_RSH="$(echo $BORG_RSH | sed "s/~/\/home\/$USER/g")"
 

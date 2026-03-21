@@ -5,6 +5,7 @@ source $BASE_DIR/.env
 SERVICE_DIR_NAME=$(basename $SERVICE_DIR)
 BORG_REPO="$BORG_REPO_BASE/$SERVICE_DIR_NAME"
 CORE_DIR="$BASE_DIR/$CORE_DIR_NAME"
+BORG_AUTOBACKUP_AUTO_ENABLE=${BORG_AUTOBACKUP_AUTO_ENABLE:-1}
 
 ensure_git_safe_directory_all() {
   if ! git config --global --get-all safe.directory 2>/dev/null | grep -Fxq '*'; then
