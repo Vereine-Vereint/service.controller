@@ -60,6 +60,14 @@ borg_controller_commands+=([autobackup-now]=":Create a new backup for all enable
 borg_controller_autobackup-now() {
   echo "[CONTROLLER] Creating a new backup for all enabled services..."
   local service
+  local attempt
+  local max_attempts=5
+  local total_services
+  local succeeded_services=0
+  local failed_services=0
+  local -a pending_services=()
+  local -a next_pending_services=()
+  local -a summary_lines=()
 
   if ! borg_autobackup_services_read; then
     echo "[CONTROLLER] Failed to read autobackup service list"
@@ -71,17 +79,54 @@ borg_controller_autobackup-now() {
     return 0
   fi
 
-  for service in "${autobackup_services[@]}"; do
-    echo
-    echo "[CONTROLLER] ######################################## Backing up service: $service"
-    # Implement the backup logic for each service here
-    set +e
-    $BASE_DIR/$service/service.sh borg autobackup-now
-    if [ $? -ne 0 ]; then
-      echo "[CONTROLLER] ######################################## Error backing up service: $service"
-    else
-      echo "[CONTROLLER] ######################################## Finished service  : $service"
+  total_services=${#autobackup_services[@]}
+  pending_services=("${autobackup_services[@]}")
+
+  for ((attempt = 1; attempt <= max_attempts; attempt++)); do
+    if [[ ${#pending_services[@]} -eq 0 ]]; then
+      break
     fi
-    set -e
+
+    echo
+    echo "[CONTROLLER] Retry round $attempt/$max_attempts (pending: ${#pending_services[@]})"
+
+    next_pending_services=()
+    for service in "${pending_services[@]}"; do
+      echo
+      echo "[CONTROLLER] ######################################## Backing up service: $service (attempt $attempt)"
+
+      set +e
+      "$BASE_DIR/$service/service.sh" borg autobackup-now
+      local backup_rc=$?
+      set -e
+
+      if [[ $backup_rc -ne 0 ]]; then
+        echo "[CONTROLLER] ######################################## Error backing up service: $service (attempt $attempt)"
+        next_pending_services+=("$service")
+      else
+        echo "[CONTROLLER] ######################################## Finished service  : $service"
+        summary_lines+=("$service: backed up (attempt $attempt)")
+        succeeded_services=$((succeeded_services + 1))
+      fi
+    done
+
+    pending_services=("${next_pending_services[@]}")
   done
+
+  for service in "${pending_services[@]}"; do
+    summary_lines+=("$service: failed after $max_attempts attempts")
+    failed_services=$((failed_services + 1))
+  done
+
+  echo
+  echo "[CONTROLLER] Autobackup summary: total=$total_services, succeeded=$succeeded_services, failed=$failed_services"
+  for service in "${summary_lines[@]}"; do
+    echo "- $service"
+  done
+
+  if [[ $failed_services -gt 0 ]]; then
+    return 1
+  fi
+
+  return 0
 }
