@@ -141,7 +141,7 @@ cmd_import() {
     export BORG_RSH="$(echo $BORG_RSH | sed "s/~/\/home\/$USER/g")"
     export BORG_REPO="$BORG_REPO_BASE/$service_name"
     export BORG_PASSPHRASE="$BORG_PASSPHRASE"
-    name=$(sudo -E borg list --sort-by timestamp | tail -n 1 | awk '{print $1}')
+    name=$(sudo -E borg list --sort-by timestamp --format '{archive}{NL}' | tail -n 1)
     if [ -z "$name" ]; then
       echo "[CONTROLLER] No backups found for service '$service_name'"
       failed_count=$((failed_count + 1))

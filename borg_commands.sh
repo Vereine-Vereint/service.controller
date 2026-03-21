@@ -71,7 +71,7 @@ borg_check_name() {
         name=${HOSTNAME}_$(date +"%Y-%m-%d_%H-%M-%S")
       else
         # else we will search for the latest
-        name=$(sudo -E borg list --sort-by timestamp | tail -n 1 | awk '{print $1}')
+        name=$(sudo -E borg list --sort-by timestamp --format '{archive}{NL}' | tail -n 1)
       fi
 
       # a bit of logging
