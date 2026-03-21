@@ -98,18 +98,18 @@ cmd_import() {
     exit 1
   fi
 
-  local should_up_default="n"
+  local should_up_default="y"
   local should_up_input
-  read -p "Do you want to start imported services after import? (y/N): " should_up_input
+  read -p "Do you want to start imported services after import? (Y/n): " should_up_input
   should_up_input="${should_up_input:-$should_up_default}"
 
-  local should_up=false
+  local should_up
   case "$should_up_input" in
-  [yY][eE][sS] | [yY])
-    should_up=true
+  [nN][oO] | [nN])
+    should_up=false
     ;;
   *)
-    should_up=false
+    should_up=true
     ;;
   esac
 
