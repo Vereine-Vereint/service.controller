@@ -11,7 +11,7 @@ source ../$CORE_DIR_NAME/core.sh
 # VARIABLES
 set -o allexport
 # set variables for docker or other services here
-# BORG_AUTOBACKUP_AUTO_ENABLE=1 # set to 1 to disable enabling/disabling autobackup on docker up/down
+# BORG_AUTOBACKUP_AUTO_ENABLE=1 # set to 0 to disable enabling/disabling autobackup on docker up/down
 set +o allexport
 
 # COMMANDS

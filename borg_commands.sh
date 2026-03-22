@@ -173,22 +173,24 @@ borg_check_git_after_restore() {
 borg_restore-fresh() {
   borg_check_name "$1" "latest"
 
-  echo "[BORG] Purging current data..."
-
   cd $SERVICE_DIR
   borg_check_git_before_restore
+  set +e # disable exit on error
 
+  echo "[BORG] Purging current data..."
   # delete all files and folders
   sudo rm -rf ./*
   echo "[BORG] Restore data from backup..."
   BORG_RSH="$(echo $BORG_RSH | sed "s/~/\/home\/$USER/g")"
   sudo -E borg extract --progress "::$name"
   if [ $? -ne 0 ]; then
+    borg_check_git_after_restore
     echo "[BORG] Restore failed"
     exit 1
   fi
 
   borg_check_git_after_restore
+  set -e # enable exit on error
 
   echo "[BORG] Restore finished"
 }
@@ -200,12 +202,16 @@ borg_restore-diff() {
 
   cd $SERVICE_DIR
   borg_check_git_before_restore
+  set +e # disable exit on error
 
   echo "[BORG] Mounting the backup..."
   mkdir -p "$BASE_DIR/.tmp/$SERVICE_DIR_NAME/mnt"
   sudo -E borg mount --progress "::$name" "$BASE_DIR/.tmp/$SERVICE_DIR_NAME/mnt"
-
-  set +e # disable exit on error
+  if [ $? -ne 0 ]; then
+    borg_check_git_after_restore
+    echo "[BORG] Mount failed. Try a restore-fresh instead."
+    exit 1
+  fi
 
   echo "[BORG] Restoring the differences from backup..."
   # Use --info=progress2 to show only the overall progress percentage
@@ -216,9 +222,8 @@ borg_restore-diff() {
   sudo -E borg umount "$BASE_DIR/.tmp/$SERVICE_DIR_NAME/mnt"
   unmountExitCode=$?
 
-  set -e # enable exit on error
-
   borg_check_git_after_restore
+  set -e # enable exit on error
 
   if [ $restoreExitCode -ne 0 ] || [ $unmountExitCode -ne 0 ]; then
     echo "[BORG] Restore failed:"
