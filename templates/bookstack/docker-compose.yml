@@ -28,8 +28,8 @@ services:
       - default # add to default (stack internal) network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.bookstack.rule=Host(`${BOOKSTACK_DOMAIN}`)"
-      - "traefik.http.routers.bookstack.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${BOOKSTACK_DOMAIN}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
     depends_on:
       - bookstack-db
 

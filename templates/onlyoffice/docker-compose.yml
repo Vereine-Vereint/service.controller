@@ -39,12 +39,12 @@ services:
 
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.onlyoffice.rule=Host(`${ONLYOFFICE_DOMAIN}`)"
-      - "traefik.http.routers.onlyoffice.entrypoints=websecure"
-      # - "traefik.http.services.onlyoffice.loadbalancer.server.port=80"
-      # - "traefik.http.services.onlyoffice.loadbalancer.passhostheader=true"
-      - "traefik.http.middlewares.onlyoffice-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
-      - "traefik.http.routers.onlyoffice.middlewares=onlyoffice-headers"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${ONLYOFFICE_DOMAIN}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      # - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=80"
+      # - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.passhostheader=true"
+      - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${COMPOSE_PROJECT_NAME}-headers"
 
   onlyoffice-rabbitmq:
     image: rabbitmq:4.0

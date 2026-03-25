@@ -59,8 +59,8 @@ services:
       - default # add to default (stack internal) network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.nextcloud.rule=Host(`${NEXTCLOUD_DOMAIN}`)"
-      - "traefik.http.routers.nextcloud.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${NEXTCLOUD_DOMAIN}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
 
   nextcloud-cron:
     container_name: nextcloud-cron

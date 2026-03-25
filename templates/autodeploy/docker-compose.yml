@@ -25,8 +25,8 @@ services:
     labels:
       - "traefik.enable=true"
       #! replace EXAMPLE with your service name
-      - "traefik.http.routers.EXAMPLE.rule=Host(`${EXAMPLE_DOMAIN}`)"
-      - "traefik.http.routers.EXAMPLE.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${EXAMPLE_DOMAIN}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
 
   EXAMPLE-DEV:
     image: connectaregensburg/EXAMPLE:latest
@@ -49,5 +49,5 @@ services:
     labels:
       - "traefik.enable=true"
       #! replace EXAMPLE-DEV with your service name
-      - "traefik.http.routers.EXAMPLE-DEV.rule=Host(`${EXAMPLE_DEV_DOMAIN}`)"
-      - "traefik.http.routers.EXAMPLE-DEV.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-DEV.rule=Host(`${EXAMPLE_DEV_DOMAIN}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-DEV.entrypoints=websecure"

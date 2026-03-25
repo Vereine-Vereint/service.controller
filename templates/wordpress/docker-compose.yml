@@ -23,8 +23,8 @@ services:
 
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.wordpress.rule=Host(`${WORDPRESS_DOMAIN}`)"
-      - "traefik.http.routers.wordpress.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${WORDPRESS_DOMAIN}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
 
   wordpress-db:
     image: mysql:8.0
