@@ -1,0 +1,59 @@
+networks:
+  default:
+  traefik:
+    external: true
+
+services:
+  karakeep-web:
+    container_name: karakeep-web
+    image: ghcr.io/karakeep-app/karakeep:${KARAKEEP_VERSION:?"Please set the KARAKEEP_VERSION environment variable"}
+    restart: unless-stopped
+    volumes:
+      - ./volumes/data:/data
+      - ./volumes/assets:/assets # all assets (covers screenshots, pdfs, ...) are stored here
+      - ./volumes/ocr-models:/ocr-cache
+      - /etc/localtime:/etc/localtime:ro
+    env_file:
+      - .env
+    environment:
+      MEILI_ADDR: http://karakeep-meilisearch:7700
+      BROWSER_WEB_URL: http://karakeep-chrome:9222
+
+      # do not change these, they point to the mounted volumes
+      ASSETS_DIR: /assets
+      OCR_CACHE_DIR: /ocr-cache
+      DATA_DIR: /data 
+    depends_on:
+      - karakeep-chrome
+      - karakeep-meilisearch
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${NEXTAUTH_URL}`)
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure
+      - traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=3000
+    networks:
+      - default
+      - traefik
+
+  karakeep-chrome:
+    container_name: karakeep-chrome
+    image: gcr.io/zenika-hub/alpine-chrome:${KARAKEEP_CHROME_VERSION:?"Please set the KARAKEEP_CHROME_VERSION environment variable"}
+    restart: unless-stopped
+    command:
+      - --no-sandbox
+      - --disable-gpu
+      - --disable-dev-shm-usage
+      - --remote-debugging-address=0.0.0.0
+      - --remote-debugging-port=9222
+      - --hide-scrollbars
+
+  karakeep-meilisearch:
+    container_name: karakeep-meilisearch
+    image: getmeili/meilisearch:${KARAKEEP_MEILI_VERSION:?"Please set the KARAKEEP_MEILI_VERSION environment variable"}
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      MEILI_NO_ANALYTICS: "true"
+    volumes:
+      - ./volumes/meilisearch:/meili_data
