@@ -28,7 +28,7 @@ services:
       - karakeep-meilisearch
     labels:
       - traefik.enable=true
-      - traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${NEXTAUTH_URL}`)
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${KARAKEEP_DOMAIN}`)
       - traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure
       - traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=3000
     networks:
