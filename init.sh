@@ -31,10 +31,9 @@ fi
 if [[ ! -f "$BASE_DIR/.env" ]]; then
   echo "creating .env file in services directory..."
   echo "CORE_DIR_NAME=$CORE_DIR_NAME" >"$BASE_DIR/.env"
-  echo "BORG_RSH=\"ssh -i \$HOME/.ssh/id_rsa\"" >>"$BASE_DIR/.env"
+  echo "BORG_RSH=\"ssh -i \$HOME/.ssh/id_ed25519\"" >>"$BASE_DIR/.env"
   echo "BORG_REPO_BASE=">>"$BASE_DIR/.env"
   echo "BORG_PASSPHRASE=">>"$BASE_DIR/.env"
-  echo "BORG_AUTOBACKUP_SERVICES=">>"$BASE_DIR/.env"
 
   echo " -> adjust the $BASE_DIR_NAME/.env file as needed"
 fi
