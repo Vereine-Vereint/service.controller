@@ -4,11 +4,14 @@ set -e
 # create services directory
 read -p "Enter services folder name (services): " BASE_DIR_NAME
 BASE_DIR_NAME=${BASE_DIR_NAME:-services}
-BASE_DIR=$(pwd)/$BASE_DIR_NAME
+if [[ "$BASE_DIR_NAME" = /* ]]; then
+  BASE_DIR="$BASE_DIR_NAME"
+else
+  BASE_DIR="$(pwd)/$BASE_DIR_NAME"
+fi
 
-mkdir -p $BASE_DIR
-cd $BASE_DIR
-
+mkdir -p "$BASE_DIR"
+cd "$BASE_DIR"
 
 # clone this repository
 read -p "Enter the controller directory name (.controller): " CORE_DIR_NAME
