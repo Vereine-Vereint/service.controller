@@ -50,7 +50,7 @@ echo "Initialization complete."
 # ? maybe even docker/docker compose as well?
 
 # create autobackup cronjob
-if crontab -l | grep -q "$BASE_DIR/controller.sh borg autobackup-now"; then
+if crontab -l 2>/dev/null | grep -q "$BASE_DIR/controller.sh borg autobackup-now"; then
   echo "Cronjob for automatic backups already exists."
 else
   read -p "Do you want to set up automatic backups? (y/n): " setup_cron
@@ -59,7 +59,7 @@ else
     if [ -z "$cron_schedule" ]; then
       cron_schedule="0 3 * * *"
     fi
-    (crontab -l 2>/dev/null; echo "$cron_schedule $BASE_DIR/controller.sh borg autobackup-now > $BASE_DIR/backup.log 2>&1") | crontab -
+    (crontab -l 2>/dev/null || true; echo "$cron_schedule $BASE_DIR/controller.sh borg autobackup-now > $BASE_DIR/backup.log 2>&1") | crontab -
     echo "Cronjob added for automatic backups."
   fi
 fi
