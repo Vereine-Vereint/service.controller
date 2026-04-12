@@ -45,8 +45,9 @@ When adding or updating a service template to align with the project's docker-co
 
 ### 5. Image Versioning
 - Move hardcoded versions to `.env` file
-- Update image references to use variables: `image: service:${SERVICE_VERSION}`
-- Add all version variables to `.env` with reasonable defaults
+- Update image references to use variables: `image: service:${SERVICE_VERSION}` (do not use a fallback or default value in the compose file)
+- The value previously referenced in the compose file should be moved to the `.env` file as the value for the variable.
+- If there is no version specified in the original compose file, add the variable to `.env` with an empty value.
 
 ### 6. Restart Policy
 - Change all `restart:` policies to `restart: unless-stopped`
