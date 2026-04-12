@@ -1,6 +1,6 @@
 ---
-name: standardize-docker-compose
-description: 'Standardize docker-compose templates to match project conventions. Use when converting service templates to use traefik, two-network architecture, .env versioning, and ./volumes mounts.'
+name: standardize-service
+description: 'Standardize service templates to match project conventions. Use when converting service templates to use traefik, two-network architecture, .env versioning, and ./volumes mounts.'
 ---
 
 # Standardize Docker Compose Templates
@@ -57,6 +57,10 @@ When adding or updating a service template to align with the project's docker-co
 
 ### 8. Environment Files
 - Only add `env_file: - .env` to a service if it actually requires loading environment variables from the file (e.g., when the service uses variables not already provided by docker-compose or the environment). Do not add it by default.
+
+### 9. TIME_ZONE
+- Extract timezone settings to `.env` as `TIME_ZONE=Europe/Berlin` or similar
+- Update docker-compose to use `${TIME_ZONE}` where already in use
 
 ## Example Reference
 
