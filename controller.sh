@@ -343,7 +343,7 @@ cmd_update() {
   cd $CORE_DIR
   git pull origin main
   echo "Controller updated to latest version"
-  ./update.sh
+  source update.sh
   echo "Controller update process completed"
 }
 
