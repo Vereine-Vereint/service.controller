@@ -26,6 +26,11 @@ else
   git clone https://github.com/Vereine-Vereint/service.controller.git "$CORE_DIR_NAME"
 fi
 
+# symlink .github from .controller to main directory if not present
+if [[ ! -L "$BASE_DIR/.github" ]]; then
+  ln -s "$BASE_DIR/$CORE_DIR_NAME/.github" "$BASE_DIR/.github"
+  echo "Symlinked $BASE_DIR/$CORE_DIR_NAME/.github to $BASE_DIR/.github"
+fi
 
 # create .env file in subdirectory. Write "CORE_DIR=<path to core>"
 if [[ ! -f "$BASE_DIR/.env" ]]; then
@@ -46,10 +51,12 @@ echo "source .env" >>"$BASE_DIR/controller.sh"
 echo "source \$CORE_DIR_NAME/controller.sh \"\$@\"" >>"$BASE_DIR/controller.sh"
 chmod +x "$BASE_DIR/controller.sh"
 
-echo "Initialization complete."
+if [[ ! -L "$BASE_DIR/.github" ]]; then
+  ln -s "$BASE_DIR/$CORE_DIR_NAME/.github" "$BASE_DIR/.github"
+  echo "Symlinked $BASE_DIR/$CORE_DIR_NAME/.github to $BASE_DIR/.github"
+fi
 
-# TODO make sure borgbackup, crontab, rsync are installed
-# ? maybe even docker/docker compose as well?
+echo "Initialization complete."
 
 # create autobackup cronjob
 if crontab -l 2>/dev/null | grep -q "$BASE_DIR/controller.sh borg autobackup-now"; then
@@ -61,7 +68,15 @@ else
     if [ -z "$cron_schedule" ]; then
       cron_schedule="0 3 * * *"
     fi
+    #TODO this does not work when crontab was never used before.
     (crontab -l 2>/dev/null || true; echo "$cron_schedule $BASE_DIR/controller.sh borg autobackup-now > $BASE_DIR/backup.log 2>&1") | crontab -
     echo "Cronjob added for automatic backups."
   fi
 fi
+
+# Check required commands
+for cmd in docker "docker compose" borg rsync; do
+  if ! $cmd --version &>/dev/null; then
+    echo "Error: $cmd is not installed. Please install it before using the controller."
+  fi
+done

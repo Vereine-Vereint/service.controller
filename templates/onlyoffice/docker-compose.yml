@@ -5,10 +5,12 @@ networks:
 
 services:
   onlyoffice:
-    image: onlyoffice/documentserver:8.2
+    image: onlyoffice/documentserver:${ONLYOFFICE_VERSION}
     depends_on:
       - onlyoffice-db
       - onlyoffice-rabbitmq
+    env_file:
+      - .env
     environment:
       - DB_TYPE=postgres
       - DB_HOST=onlyoffice-db
@@ -27,19 +29,17 @@ services:
     # ports:
       # - '80:80'
       # - '443:443'
-    stdin_open: true
     restart: unless-stopped
     stop_grace_period: 60s
     volumes:
-       # - /var/www/onlyoffice/Data # certificates, not needed with proxy
-       - ./volumes/log:/var/log/onlyoffice
-       - ./volumes/lib:/var/lib/onlyoffice/documentserver/App_Data/cache/files
-       - ./volumes/www:/var/www/onlyoffice/documentserver-example/public/files
-       - ./volumes/fonts:/usr/share/fonts
-
+      # - /var/www/onlyoffice/Data # certificates, not needed with proxy
+      - ./volumes/log:/var/log/onlyoffice
+      - ./volumes/lib:/var/lib/onlyoffice/documentserver/App_Data/cache/files
+      - ./volumes/www:/var/www/onlyoffice/documentserver-example/public/files
+      - ./volumes/fonts:/usr/share/fonts
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${ONLYOFFICE_DOMAIN}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${DOMAIN}`)"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
       # - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=80"
       # - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.passhostheader=true"
@@ -47,20 +47,19 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${COMPOSE_PROJECT_NAME}-headers"
 
   onlyoffice-rabbitmq:
-    image: rabbitmq:4.0
+    image: rabbitmq:${RABBITMQ_VERSION}
     restart: unless-stopped
     # expose:
-    #   - '5672'
+      # - '5672'
 
   onlyoffice-db:
-    container_name: onlyoffice-db
-    image: postgres:12
+    image: postgres:${POSTGRES_VERSION}
     environment:
       - POSTGRES_DB=onlyoffice
       - POSTGRES_USER=onlyoffice
       - POSTGRES_HOST_AUTH_METHOD=trust
     restart: unless-stopped
     # expose:
-    #   - '5432'
+      # - '5432'
     volumes:
       - ./volumes/db:/var/lib/postgresql

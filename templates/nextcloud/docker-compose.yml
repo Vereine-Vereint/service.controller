@@ -5,8 +5,7 @@ networks:
 
 services:
   nextcloud-db:
-    image: mariadb:10.5
-    container_name: nextcloud-db
+    image: mariadb:${MARIA_DB_VERSION}
     restart: unless-stopped
     command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
     volumes:
@@ -22,7 +21,6 @@ services:
 
   nextcloud-redis:
     image: redis
-    container_name: nextcloud-redis
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
@@ -30,7 +28,6 @@ services:
 
   nextcloud:
     image: nextcloud:${NEXTCLOUD_VERSION}
-    container_name: nextcloud
     restart: unless-stopped
     links:
       - nextcloud-db
@@ -40,7 +37,7 @@ services:
     environment:
       - APACHE_DISABLE_REWRITE_IP=1
       - TRUSTED_PROXIES=traefik
-      - NEXTCLOUD_TRUSTED_DOMAINS=${NEXTCLOUD_DOMAIN}
+      - NEXTCLOUD_TRUSTED_DOMAINS=${DOMAIN}
       - NEXTCLOUD_ADMIN_USER=${NEXTCLOUD_ADMIN_USERNAME}
       - NEXTCLOUD_ADMIN_PASSWORD=${NEXTCLOUD_ADMIN_PASSWORD}
       - OVERWRITEPROTOCOL=https
@@ -59,11 +56,10 @@ services:
       - default # add to default (stack internal) network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${NEXTCLOUD_DOMAIN}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${DOMAIN}`)"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
 
   nextcloud-cron:
-    container_name: nextcloud-cron
     image: nextcloud:${NEXTCLOUD_VERSION}
     restart: unless-stopped
     links:

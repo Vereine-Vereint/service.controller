@@ -104,7 +104,7 @@ services:
       - ./volumes/var:/opt/zammad/var:ro # required for the zammad-ready check file
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${ZAMMAD_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${DOMAIN}`)"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
 
   zammad-postgresql:

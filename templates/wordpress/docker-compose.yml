@@ -5,7 +5,7 @@ networks:
 
 services:
   wordpress:
-    image: wordpress:6.9.0
+    image: wordpress:${WORDPRESS_VERSION}
     restart: unless-stopped
     environment:
       WORDPRESS_DB_HOST: wordpress-db
@@ -23,11 +23,11 @@ services:
 
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${WORDPRESS_DOMAIN}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${DOMAIN}`)"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
 
   wordpress-db:
-    image: mysql:8.0
+    image: mysql:${MYSQL_VERSION}
     restart: unless-stopped
     environment:
       MYSQL_DATABASE: wordpress

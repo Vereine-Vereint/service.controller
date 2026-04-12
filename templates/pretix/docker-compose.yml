@@ -5,7 +5,10 @@ networks:
 
 services:
   pretix:
-    build: .
+    build:
+      context: .
+      args:
+        PRETIX_VERSION: ${PRETIX_VERSION}
     restart: unless-stopped
     depends_on:
       - pretix-db
@@ -22,12 +25,12 @@ services:
 
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${PRETIX_DOMAIN}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${DOMAIN}`)"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.priority=2"
 
   pretix-db:
-    image: postgres:13-alpine3.19
+    image: postgres:${POSTGRES_VERSION}
     restart: unless-stopped
     # ports:
     #   - "5432:5432"
@@ -43,7 +46,7 @@ services:
       timeout: 5s
 
   pretix-redis:
-    image: redis:alpine3.19
+    image: redis:${REDIS_VERSION}
     restart: unless-stopped
     # ports:
     #   - "6379:6379"
@@ -53,7 +56,7 @@ services:
       timeout: 3s
 
   errorpage-service:
-    image: nginx:alpine
+    image: nginx:${NGINX_VERSION}
     restart: unless-stopped
     volumes:
       - ./error-pages:/usr/share/nginx/html:ro

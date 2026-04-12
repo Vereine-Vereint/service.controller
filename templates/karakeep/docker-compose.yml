@@ -5,8 +5,7 @@ networks:
 
 services:
   karakeep-web:
-    container_name: karakeep-web
-    image: ghcr.io/karakeep-app/karakeep:${KARAKEEP_VERSION:?"Please set the KARAKEEP_VERSION environment variable"}
+    image: ghcr.io/karakeep-app/karakeep:${KARAKEEP_VERSION}
     restart: unless-stopped
     volumes:
       - ./volumes/data:/data
@@ -28,7 +27,7 @@ services:
       - karakeep-meilisearch
     labels:
       - traefik.enable=true
-      - traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${KARAKEEP_DOMAIN}`)
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${DOMAIN}`)
       - traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure
       - traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=3000
     networks:
@@ -36,8 +35,7 @@ services:
       - traefik
 
   karakeep-chrome:
-    container_name: karakeep-chrome
-    image: gcr.io/zenika-hub/alpine-chrome:${KARAKEEP_CHROME_VERSION:?"Please set the KARAKEEP_CHROME_VERSION environment variable"}
+    image: gcr.io/zenika-hub/alpine-chrome:${KARAKEEP_CHROME_VERSION}
     restart: unless-stopped
     command:
       - --no-sandbox
@@ -48,8 +46,7 @@ services:
       - --hide-scrollbars
 
   karakeep-meilisearch:
-    container_name: karakeep-meilisearch
-    image: getmeili/meilisearch:${KARAKEEP_MEILI_VERSION:?"Please set the KARAKEEP_MEILI_VERSION environment variable"}
+    image: getmeili/meilisearch:${KARAKEEP_MEILI_VERSION}
     restart: unless-stopped
     env_file:
       - .env
