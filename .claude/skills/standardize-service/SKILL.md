@@ -43,6 +43,21 @@ When adding or updating a service template to align with the project's docker-co
 - Some older templates may have DOMAIN variables like `${PRETIX_DOMAIN}`. Standardize to `${DOMAIN}` for consistency.
 - Include service-specific port labels if needed (e.g., karakeep's port 3000)
 
+### 4b. Per-service Traefik file-provider conf (`traefik/` subdir)
+For routing or middleware config that compose labels can't express (forwardAuth middlewares,
+custom routers, TLS options, etc.), put YAMLs into a `traefik/` subdirectory of the service.
+The controller bind-mounts `<service>/traefik/` → `$BASE_DIR/.traefik/<service>/` on `up`, and
+the traefik container watches `/etc/traefik/conf/` via its file provider — so files become
+available at `/etc/traefik/conf/<service>/<file>.yml`.
+
+- Use this only when labels are insufficient; keep plain host routing in labels.
+- Each YAML follows traefik's dynamic-config schema (`http.middlewares`, `http.routers`,
+  `http.services`, `tls.options`).
+- Reference middlewares from compose labels with the `@file` provider suffix, e.g.
+  `traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=authentik@file`.
+- Example files live in [`templates/traefik/traefik/`](../../../templates/traefik/traefik/)
+  (`authentik.yml`, `dashboard.yml`, `shortcuts.yml`).
+
 ### 5. Image Versioning
 - Move hardcoded versions to `.env` file
 - Update image references to use variables: `image: service:${SERVICE_VERSION}` (do not use a fallback or default value in the compose file)

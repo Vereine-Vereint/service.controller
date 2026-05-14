@@ -26,10 +26,16 @@ else
   git clone https://github.com/Vereine-Vereint/service.controller.git "$CORE_DIR_NAME"
 fi
 
-# symlink .github from .controller to main directory if not present
-if [[ ! -L "$BASE_DIR/.github" ]]; then
-  ln -s "$BASE_DIR/$CORE_DIR_NAME/.github" "$BASE_DIR/.github"
-  echo "Symlinked $BASE_DIR/$CORE_DIR_NAME/.github to $BASE_DIR/.github"
+# symlink .claude from .controller to main directory if not present
+if [[ ! -L "$BASE_DIR/.claude" ]]; then
+  ln -s "$BASE_DIR/$CORE_DIR_NAME/.claude" "$BASE_DIR/.claude"
+  echo "Symlinked $BASE_DIR/$CORE_DIR_NAME/.claude to $BASE_DIR/.claude"
+fi
+
+# symlink CLAUDE.md from .controller to main directory if not present
+if [[ ! -e "$BASE_DIR/CLAUDE.md" ]]; then
+  ln -s "$BASE_DIR/$CORE_DIR_NAME/CLAUDE.md" "$BASE_DIR/CLAUDE.md"
+  echo "Symlinked $BASE_DIR/$CORE_DIR_NAME/CLAUDE.md to $BASE_DIR/CLAUDE.md"
 fi
 
 # create .env file in subdirectory. Write "CORE_DIR=<path to core>"
@@ -51,11 +57,6 @@ echo "source .env" >>"$BASE_DIR/controller.sh"
 echo "source \$CORE_DIR_NAME/controller.sh \"\$@\"" >>"$BASE_DIR/controller.sh"
 chmod +x "$BASE_DIR/controller.sh"
 
-if [[ ! -L "$BASE_DIR/.github" ]]; then
-  ln -s "$BASE_DIR/$CORE_DIR_NAME/.github" "$BASE_DIR/.github"
-  echo "Symlinked $BASE_DIR/$CORE_DIR_NAME/.github to $BASE_DIR/.github"
-fi
-
 echo "Initialization complete."
 
 # create autobackup cronjob
@@ -69,7 +70,7 @@ else
       cron_schedule="0 3 * * *"
     fi
     #TODO this does not work when crontab was never used before.
-    (crontab -l 2>/dev/null || true; echo "$cron_schedule $BASE_DIR/controller.sh borg autobackup-now > $BASE_DIR/backup.log 2>&1") | crontab -
+    (crontab -l 2>/dev/null || true; echo "$cron_schedule $BASE_DIR/controller.sh borg autobackup-now > $BASE_DIR/.backup.log 2>&1") | crontab -
     echo "Cronjob added for automatic backups."
   fi
 fi

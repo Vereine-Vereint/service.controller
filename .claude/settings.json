@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(/services/.env)"
+    ],
+    "allow": [
+      "Bash(./service.sh status)",
+      "Bash(./service.sh logs)",
+      "Bash(./service.sh help)",
+      "Bash(./service.sh borg list)",
+      "Bash(./controller.sh help)"
+    ]
+  }
+}
