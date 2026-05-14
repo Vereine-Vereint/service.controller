@@ -80,8 +80,12 @@ docker_down() {
   exec_attachment post-stop
   exec_attachment remove
 
-  if ! borg_autobackup-disable; then
-    echo "[BORG] Warning: could not disable controller autobackup for $SERVICE_DIR_NAME"
+  traefik_link_teardown
+
+  if [[ "${BORG_AUTOBACKUP_AUTO_ENABLE:-1}" != "0" ]]; then
+    if ! borg_autobackup-disable; then
+      echo "[BORG] Warning: could not disable controller autobackup for $SERVICE_DIR_NAME"
+    fi
   fi
 }
 
@@ -90,14 +94,18 @@ docker_up() {
   exec_attachment configure
   exec_attachment pre-start
 
+  traefik_link_setup
+
   docker compose -p $SERVICE_DIR_NAME up -d "$@"
 
   exec_attachment post-setup
   exec_attachment post-configure
   exec_attachment post-start
 
-  if ! borg_autobackup-enable; then
-    echo "[BORG] Warning: could not enable controller autobackup for $SERVICE_DIR_NAME"
+  if [[ "${BORG_AUTOBACKUP_AUTO_ENABLE:-1}" != "0" ]]; then
+    if ! borg_autobackup-enable; then
+      echo "[BORG] Warning: could not enable controller autobackup for $SERVICE_DIR_NAME"
+    fi
   fi
 }
 

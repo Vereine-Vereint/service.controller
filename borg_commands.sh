@@ -171,10 +171,21 @@ borg_check_git_after_restore() {
 }
 
 borg_restore-fresh() {
-  borg_check_name "$1" "latest"
+  local clean_git=false
+  local args=()
+  for arg in "$@"; do
+    case "$arg" in
+      --clean-git) clean_git=true ;;
+      *) args+=("$arg") ;;
+    esac
+  done
+
+  borg_check_name "${args[0]:-}" "latest"
 
   cd $SERVICE_DIR
-  borg_check_git_before_restore
+  if ! $clean_git; then
+    borg_check_git_before_restore
+  fi
   set +e # disable exit on error
 
   echo "[BORG] Purging current data..."
@@ -184,31 +195,48 @@ borg_restore-fresh() {
   BORG_RSH="$(echo $BORG_RSH | sed "s/~/\/home\/$USER/g")"
   sudo -E borg extract --progress "::$name"
   if [ $? -ne 0 ]; then
-    borg_check_git_after_restore
+    if ! $clean_git; then
+      borg_check_git_after_restore
+    fi
     echo "[BORG] Restore failed"
     exit 1
   fi
 
-  borg_check_git_after_restore
+  if ! $clean_git; then
+    borg_check_git_after_restore
+  fi
   set -e # enable exit on error
 
   echo "[BORG] Restore finished"
 }
 
 borg_restore-diff() {
-  borg_check_name "$1" "latest"
+  local clean_git=false
+  local args=()
+  for arg in "$@"; do
+    case "$arg" in
+      --clean-git) clean_git=true ;;
+      *) args+=("$arg") ;;
+    esac
+  done
+
+  borg_check_name "${args[0]:-}" "latest"
 
   BORG_RSH="$(echo $BORG_RSH | sed "s/~/\/home\/$USER/g")"
 
   cd $SERVICE_DIR
-  borg_check_git_before_restore
+  if ! $clean_git; then
+    borg_check_git_before_restore
+  fi
   set +e # disable exit on error
 
   echo "[BORG] Mounting the backup..."
   mkdir -p "$BASE_DIR/.tmp/$SERVICE_DIR_NAME/mnt"
   sudo -E borg mount --progress "::$name" "$BASE_DIR/.tmp/$SERVICE_DIR_NAME/mnt"
   if [ $? -ne 0 ]; then
-    borg_check_git_after_restore
+    if ! $clean_git; then
+      borg_check_git_after_restore
+    fi
     echo "[BORG] Mount failed. Try a restore-fresh instead."
     exit 1
   fi
@@ -222,7 +250,9 @@ borg_restore-diff() {
   sudo -E borg umount "$BASE_DIR/.tmp/$SERVICE_DIR_NAME/mnt"
   unmountExitCode=$?
 
-  borg_check_git_after_restore
+  if ! $clean_git; then
+    borg_check_git_after_restore
+  fi
   set -e # enable exit on error
 
   if [ $restoreExitCode -ne 0 ] || [ $unmountExitCode -ne 0 ]; then

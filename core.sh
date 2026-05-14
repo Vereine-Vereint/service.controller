@@ -55,6 +55,7 @@ add_global_subcommand() {
 source $CORE_DIR/borg.sh
 source $CORE_DIR/docker.sh
 source $CORE_DIR/git.sh
+source $CORE_DIR/traefik_link.sh
 
 # FUNCTIONS
 source $CORE_DIR/func_help.sh
