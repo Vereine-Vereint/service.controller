@@ -71,8 +71,14 @@ available at `/etc/traefik/conf/<service>/<file>.yml`.
 - Change all volume mounts to use `./volumes/` prefix
 - Example: `/var/lib/postgresql` → `./volumes/db:/var/lib/postgresql`
 
-### 8. Environment Files
-- Only add `env_file: - .env` to a service if it actually requires loading environment variables from the file (e.g., when the service uses variables not already provided by docker-compose or the environment). Do not add it by default.
+### 8. Environment Variables
+- **Inline in `environment:`**: Container-specific configs that are NOT host-specific or private (e.g., internal paths, stack-internal DB URLs, DB passwords for databases hosted within the same stack). Also inline values that can be derived from existing compose variables (e.g., `APP_URL: https://${DOMAIN}`, `HUB_URL: https://${DOMAIN}`).
+- **Compose interpolation for secrets**: When a non-primary service needs host-specific or secret values from `.env`, reference them via compose interpolation in `environment:` (e.g., `TOKEN: ${AGENT_TOKEN}`). Prefix variable names in `.env` to clarify which service uses them (e.g., `AGENT_TOKEN`, `AGENT_KEY`). Do NOT use `env_file:` to pass the entire `.env` to a service just for a few variables.
+- **Main `.env` file**: For variables used by docker-compose interpolation (`${...}` syntax) such as `DOMAIN`, image versions, `TIME_ZONE`, and host-specific or private/secret values (e.g., `AGENT_TOKEN`, `AGENT_KEY`).
+- **Separate `<service>.env` files**: Only create per-service env files (e.g., `agent.env`) when there are **many** host-specific/private variables for a non-primary service that would clutter the shared `.env`. For just a few variables, use compose interpolation instead.
+- **`env_file: - .env`**: Only add this to a service if it directly consumes many variables from `.env` at runtime (not via compose interpolation). Prefer explicit `environment:` entries with `${VAR}` references for clarity.
+- Do NOT dump all environment variables from all containers into the shared `.env`. If a variable is specific to one container and not host-specific, it belongs inline in `environment:`.
+- Rule of thumb: if comments in the original source already group variables per container, that's a signal they should stay inline per container, not be merged into `.env`.
 
 ### 9. TIME_ZONE
 - Extract timezone settings to `.env` as `TIME_ZONE=Europe/Berlin` or similar
@@ -90,3 +96,5 @@ After standardization:
 - Only services on traefik network have explicit `networks:` declaration
 - All volumes reference `./volumes/...`
 - `.env` file includes all version variables
+- Container-specific non-secret configs are inline in `environment:`
+- Host-specific/private values are in `.env` via compose interpolation (e.g., `TOKEN: ${AGENT_TOKEN}`); separate `<service>.env` files only when many variables would clutter `.env`
