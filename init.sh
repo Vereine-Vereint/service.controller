@@ -26,17 +26,9 @@ else
   git clone https://github.com/Vereine-Vereint/service.controller.git "$CORE_DIR_NAME"
 fi
 
-# symlink .claude from .controller to main directory if not present
-if [[ ! -L "$BASE_DIR/.claude" ]]; then
-  ln -s "$BASE_DIR/$CORE_DIR_NAME/.claude" "$BASE_DIR/.claude"
-  echo "Symlinked $BASE_DIR/$CORE_DIR_NAME/.claude to $BASE_DIR/.claude"
-fi
-
-# symlink CLAUDE.md from .controller to main directory if not present
-if [[ ! -e "$BASE_DIR/CLAUDE.md" ]]; then
-  ln -s "$BASE_DIR/$CORE_DIR_NAME/CLAUDE.md" "$BASE_DIR/CLAUDE.md"
-  echo "Symlinked $BASE_DIR/$CORE_DIR_NAME/CLAUDE.md to $BASE_DIR/CLAUDE.md"
-fi
+# Run the same symlink logic update.sh uses (prompts to overwrite if something
+# unexpected is already at .claude or CLAUDE.md).
+source "$BASE_DIR/$CORE_DIR_NAME/update.sh"
 
 # create .env file in subdirectory. Write "CORE_DIR=<path to core>"
 if [[ ! -f "$BASE_DIR/.env" ]]; then
