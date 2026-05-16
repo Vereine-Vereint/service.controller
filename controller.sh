@@ -337,6 +337,111 @@ cmd_remove() {
   done
 }
 
+commands+=([rename]="<old> <new>:Rename a service (moves folder and borg repo)")
+cmd_rename() {
+  local old_name="$1"
+  local new_name="$2"
+
+  if [[ -z "$old_name" || -z "$new_name" ]]; then
+    echo "Usage: rename <old> <new>"
+    exit 1
+  fi
+  if [[ "$old_name" == "$new_name" ]]; then
+    echo "[CONTROLLER] Old and new name are identical"
+    exit 1
+  fi
+  if [[ "$new_name" == */* || "$new_name" == .* ]]; then
+    echo "[CONTROLLER] New name must be a simple folder name (no slashes, no leading dot)"
+    exit 1
+  fi
+  if [[ ! -d "$BASE_DIR/$old_name" ]]; then
+    echo "[CONTROLLER] Service '$old_name' does not exist"
+    exit 1
+  fi
+  if [[ -e "$BASE_DIR/$new_name" ]]; then
+    echo "[CONTROLLER] '$new_name' already exists at $BASE_DIR"
+    exit 1
+  fi
+
+  local should_stop_input
+  read -p "Stop service '$old_name' before rename? (Y/n): " should_stop_input
+  should_stop_input="${should_stop_input:-y}"
+  local should_stop=true
+  case "$should_stop_input" in
+  [nN][oO] | [nN])
+    should_stop=false
+    ;;
+  esac
+
+  local should_start=false
+  if $should_stop; then
+    local should_start_input
+    read -p "Start service '$new_name' after rename? (Y/n): " should_start_input
+    should_start_input="${should_start_input:-y}"
+    should_start=true
+    case "$should_start_input" in
+    [nN][oO] | [nN])
+      should_start=false
+      ;;
+    esac
+  fi
+
+  echo
+  echo "About to rename '$old_name' -> '$new_name':"
+  echo "  - move folder $BASE_DIR/$old_name -> $BASE_DIR/$new_name"
+  echo "  - move borg repo $BORG_REPO_BASE/$old_name -> $BORG_REPO_BASE/$new_name"
+  $should_stop && echo "  - service will be stopped first (clears autobackup entry + traefik mount)"
+  $should_start && echo "  - service will be restarted under new name (re-enrolls autobackup + traefik mount)"
+  if ! $should_stop; then
+    echo "  - WARNING: skipping stop leaves $BASE_DIR/.backup pointing at '$old_name'"
+    echo "             and the traefik bind-mount at $BASE_DIR/.traefik/$old_name attached."
+    echo "             Both reset cleanly on the next './$new_name/service.sh down' + 'up'."
+  fi
+  local confirm_input
+  read -p "Proceed? (y/N): " confirm_input
+  case "$confirm_input" in
+  [yY][eE][sS] | [yY]) ;;
+  *)
+    echo "Aborting"
+    exit 0
+    ;;
+  esac
+
+  if $should_stop; then
+    echo "[CONTROLLER] Stopping '$old_name'..."
+    if ! "$BASE_DIR/$old_name/service.sh" down; then
+      echo "[CONTROLLER] Failed to stop '$old_name' - aborting rename"
+      exit 1
+    fi
+  fi
+
+  echo "[CONTROLLER] Moving folder $old_name -> $new_name..."
+  if ! sudo mv "$BASE_DIR/$old_name" "$BASE_DIR/$new_name"; then
+    echo "[CONTROLLER] Folder move failed - aborting (nothing else changed yet)"
+    exit 1
+  fi
+
+  echo "[CONTROLLER] Moving borg repo $old_name -> $new_name..."
+  if borg_controller_move_repo "$old_name" "$new_name"; then
+    echo "[CONTROLLER] Borg repo moved successfully"
+  else
+    echo "[CONTROLLER] WARNING: borg repo move failed."
+    echo "             Folder rename DID succeed. You should manually move the"
+    echo "             repo at $BORG_REPO_BASE/$old_name to $BORG_REPO_BASE/$new_name"
+    echo "             or future backups will go to a fresh repo at the new name."
+  fi
+
+  if $should_start; then
+    echo "[CONTROLLER] Starting '$new_name'..."
+    if ! "$BASE_DIR/$new_name/service.sh" up; then
+      echo "[CONTROLLER] WARNING: failed to start '$new_name' under new name"
+    fi
+  fi
+
+  echo
+  echo "[CONTROLLER] Rename complete: '$old_name' -> '$new_name'"
+}
+
 commands+=([update]=":Update the controller to the latest version")
 cmd_update() {
   echo "Updating controller..."

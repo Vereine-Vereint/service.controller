@@ -45,10 +45,12 @@ Two-layer bash dispatch on top of `docker compose` and `borgbackup`:
 
 The outer `controller.sh` is a thin shim that sources the outer `.env` then
 [controller.sh](controller.sh). Handles operations that span all services:
-`create <name> <template>`, `import <name...>`, `remove <name...>`, `update`. Also exposes
-controller-scoped `borg` subcommands via [controller_borg.sh](controller_borg.sh)
-(e.g. `borg change-passphrase`, `borg autobackup-now` which iterates every service in
-`$BASE_DIR/.backup` with 5 retry rounds).
+`create <name> <template>`, `import <name...>`, `remove <name...>`, `rename <old> <new>`,
+`update`. Also exposes controller-scoped `borg` subcommands via
+[controller_borg.sh](controller_borg.sh) — `borg change-passphrase`, `borg autobackup-now`
+(iterates every service in `$BASE_DIR/.backup` with 5 retry rounds), `borg list-repos`
+(enumerates every repo under `$BORG_REPO_BASE`, flagging orphans), `borg delete-repo <name>`
+(wipes a repo after listing recent archives and asking the operator to retype the name).
 
 ### Per-service controller
 
@@ -104,6 +106,9 @@ subcommand modules:
 ./controller.sh create <name> [template]   # template defaults to "default"
 ./controller.sh import <name...>           # restore service(s) from latest borg backup
 ./controller.sh remove <name...>           # prompts for stop+backup before deleting
+./controller.sh rename <old> <new>         # moves service folder + borg repo, prompts to stop+start
+./controller.sh borg list-repos            # list all borg repos (incl. orphaned)
+./controller.sh borg delete-repo <name>    # wipe a borg repo after confirmation
 ./controller.sh update                     # git pull .controller/ + run update.sh
 
 # Run a service (inside e.g. test/)
