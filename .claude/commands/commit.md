@@ -22,8 +22,8 @@ ones whose git working tree is dirty.
    a. `cd` into the service dir and run `git status` + `git diff` (staged and unstaged) to see what
       changed. Read enough of the diff to actually understand the change — don't just summarize
       filenames.
-   b. Draft a concise, conventional commit message (`<type>: <subject>`, ~70 chars max) that
-      describes the **why** of the change, following the style in `git log` of that service.
+   b. Draft a **very short** commit message — one sentence at most, ideally under ~70 chars —
+      that captures the **why** of the change. No body, no bullet list, no multi-line message.
    c. Show the user the proposed message and a one-line summary of the changes. Ask the user to
       confirm, edit, or skip — use the AskUserQuestion tool with options like "Use as-is", "Edit
       message", "Skip this service".
