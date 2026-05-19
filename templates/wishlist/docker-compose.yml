@@ -1,0 +1,32 @@
+networks:
+  default:
+  traefik:
+    external: true
+
+services:
+  wishlist:
+    image: ghcr.io/cmintey/wishlist:${WISHLIST_VERSION}
+    restart: unless-stopped
+    # ports:
+    #   - 3280:3280
+    volumes:
+      - ./volumes/data:/usr/src/app/data
+      - ./volumes/uploads:/usr/src/app/uploads
+    environment:
+      ORIGIN: https://${DOMAIN}
+      TZ: ${TIME_ZONE}
+      TOKEN_TIME: 72
+      # DEFAULT_CURRENCY: USD
+      # MAX_IMAGE_SIZE: 5000000
+      # HEADER_AUTH_ENABLED: ${HEADER_AUTH_ENABLED}
+      # HEADER_USERNAME: ${HEADER_USERNAME}
+      # HEADER_NAME: ${HEADER_NAME}
+      # HEADER_EMAIL: ${HEADER_EMAIL}
+    networks:
+      - default
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=3280"
